@@ -1,0 +1,11 @@
+[
+  { "id": 1, "role": "Frontend Engineer", "date": "2026-07-12", "score": "88%", "status": "Completed" },
+  { "id": 2, "role": "Backend Engineer", "date": "2026-07-09", "score": "76%", "status": "Completed" },
+  { "id": 3, "role": "Product Manager", "date": "2026-07-06", "score": "—", "status": "In Progress" },
+  { "id": 4, "role": "Data Scientist", "date": "2026-07-02", "score": "91%", "status": "Completed" },
+  { "id": 5, "role": "DevOps Engineer", "date": "2026-06-28", "score": "—", "status": "Scheduled" },
+  { "id": 6, "role": "Full Stack Engineer", "date": "2026-06-24", "score": "82%", "status": "Completed" },
+  { "id": 7, "role": "Engineering Manager", "date": "2026-06-20", "score": "79%", "status": "Completed" },
+  { "id": 8, "role": "Mobile Engineer", "date": "2026-06-16", "score": "—", "status": "Scheduled" },
+  { "id": 9, "role": "Machine Learning Engineer", "date": "2026-06-11", "score": "85%", "status": "Completed" }
+]
