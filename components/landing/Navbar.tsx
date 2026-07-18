@@ -7,7 +7,6 @@ import Link from "next/link";
 import { ChevronDown, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -41,7 +40,6 @@ export function Navbar() {
         <NavItem>Documentation</NavItem>
       </nav>
       <div className="flex items-center gap-4">
-        <ThemeToggle className="text-white/70 hover:bg-white/10 hover:text-white" />
         <Link
           href="/login"
           className="hidden text-sm text-white/70 transition-colors hover:text-white sm:block"
