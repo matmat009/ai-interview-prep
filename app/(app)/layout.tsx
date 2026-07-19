@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { GradientBackground } from "@/components/layout/GradientBackground";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
@@ -18,10 +19,15 @@ export default function AppLayout({
     >
       <AppSidebar variant="inset" />
       <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            {children}
+        {/* Decorative blurred color wash, behind everything in the inset. */}
+        <GradientBackground />
+        {/* Foreground: header + content sit above the gradient via z-10. */}
+        <div className="relative z-10 flex flex-1 flex-col">
+          <SiteHeader />
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              {children}
+            </div>
           </div>
         </div>
       </SidebarInset>
