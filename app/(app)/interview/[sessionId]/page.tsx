@@ -2,11 +2,10 @@
 
 import { use, useState } from "react";
 
-import { useRouter } from "next/navigation";
-
 import { AnswerInput } from "@/features/interview/components/AnswerInput";
 import { FeedbackPanel } from "@/features/interview/components/FeedbackPanel";
 import { QuestionCard } from "@/features/interview/components/QuestionCard";
+import { SessionSummary } from "@/features/interview/components/SessionSummary";
 
 // Dummy question set for the dummy role/focus (Frontend Engineer · System Design).
 // Q1 is a warm-up; Q2–5 get progressively more specific. Replaced with real data
@@ -28,8 +27,6 @@ export default function InterviewSessionPage({
   const { sessionId } = use(params);
   void sessionId;
 
-  const router = useRouter();
-
   const total = QUESTIONS.length;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>(() =>
@@ -37,6 +34,7 @@ export default function InterviewSessionPage({
   );
   const [draft, setDraft] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
+  const [finished, setFinished] = useState(false);
 
   const isLast = currentIndex === total - 1;
 
@@ -51,8 +49,8 @@ export default function InterviewSessionPage({
 
   function handleNext() {
     if (isLast) {
-      // No session persistence yet — return to history.
-      router.push("/history");
+      // Show the session summary before leaving the flow.
+      setFinished(true);
       return;
     }
     setCurrentIndex((index) => index + 1);
@@ -63,20 +61,30 @@ export default function InterviewSessionPage({
   return (
     <div className="flex w-full flex-1 flex-col items-center px-4 py-10">
       <div className="my-auto flex w-full max-w-2xl flex-col gap-5">
-        <QuestionCard
-          index={currentIndex}
-          total={total}
-          question={QUESTIONS[currentIndex]}
-        />
-
-        {showFeedback ? (
-          <FeedbackPanel
-            answer={answers[currentIndex]}
-            isLast={isLast}
-            onNext={handleNext}
-          />
+        {finished ? (
+          <SessionSummary questions={QUESTIONS} />
         ) : (
-          <AnswerInput value={draft} onChange={setDraft} onSubmit={handleSubmit} />
+          <>
+            <QuestionCard
+              index={currentIndex}
+              total={total}
+              question={QUESTIONS[currentIndex]}
+            />
+
+            {showFeedback ? (
+              <FeedbackPanel
+                answer={answers[currentIndex]}
+                isLast={isLast}
+                onNext={handleNext}
+              />
+            ) : (
+              <AnswerInput
+                value={draft}
+                onChange={setDraft}
+                onSubmit={handleSubmit}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

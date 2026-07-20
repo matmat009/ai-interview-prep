@@ -5,6 +5,7 @@ import * as React from "react"
 import Link from "next/link"
 
 import { NavMain } from "@/components/layout/nav-main"
+import { NavRecentSessions } from "@/components/layout/nav-recent-sessions"
 import { NavUser } from "@/components/layout/nav-user"
 import {
   Sidebar,
@@ -71,6 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        <NavRecentSessions />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
