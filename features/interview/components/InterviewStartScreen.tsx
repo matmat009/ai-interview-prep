@@ -14,17 +14,24 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
-// Dummy onboarding context — wired to real answers in a later step.
-const SUMMARY = [
-  { icon: Briefcase, label: "Role", value: "Frontend Engineer" },
-  { icon: TrendingUp, label: "Experience", value: "Mid-level" },
-  { icon: Target, label: "Focus", value: "System Design" },
-];
+import { AdjustFocusModal } from "@/features/interview/components/AdjustFocusModal";
 
 export function InterviewStartScreen() {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
+
+  // Per-session focus override (dummy onboarding defaults; not persisted yet).
+  const [focusOpen, setFocusOpen] = useState(false);
+  const [interviewType, setInterviewType] = useState("System Design");
+  const [topic, setTopic] = useState("");
+
+  const focusValue = topic ? `${interviewType} · ${topic}` : interviewType;
+
+  const summary = [
+    { icon: Briefcase, label: "Role", value: "Frontend Engineer" },
+    { icon: TrendingUp, label: "Experience", value: "Mid-level" },
+    { icon: Target, label: "Focus", value: focusValue },
+  ];
 
   function handleStart() {
     setStarting(true);
@@ -69,7 +76,7 @@ export function InterviewStartScreen() {
             </span>
           </div>
           <div className="divide-y divide-white/5">
-            {SUMMARY.map((row) => (
+            {summary.map((row) => (
               <div key={row.label} className="flex items-center gap-3 px-5 py-4">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <row.icon className="size-4" />
@@ -77,7 +84,7 @@ export function InterviewStartScreen() {
                 <span className="text-sm text-muted-foreground">
                   {row.label}
                 </span>
-                <span className="ml-auto text-sm font-medium text-foreground">
+                <span className="ml-auto text-right text-sm font-medium text-foreground">
                   {row.value}
                 </span>
               </div>
@@ -98,12 +105,24 @@ export function InterviewStartScreen() {
           </Button>
           <button
             type="button"
+            onClick={() => setFocusOpen(true)}
             className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
           >
             Adjust focus
           </button>
         </div>
       </div>
+
+      <AdjustFocusModal
+        open={focusOpen}
+        onOpenChange={setFocusOpen}
+        interviewType={interviewType}
+        topic={topic}
+        onSave={(nextType, nextTopic) => {
+          setInterviewType(nextType);
+          setTopic(nextTopic);
+        }}
+      />
     </div>
   );
 }

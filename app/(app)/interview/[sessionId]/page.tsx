@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 
 import { AnswerInput } from "@/features/interview/components/AnswerInput";
+import { FeedbackLoading } from "@/features/interview/components/FeedbackLoading";
 import { FeedbackPanel } from "@/features/interview/components/FeedbackPanel";
 import { QuestionCard } from "@/features/interview/components/QuestionCard";
 import { SessionSummary } from "@/features/interview/components/SessionSummary";
@@ -17,6 +18,15 @@ const QUESTIONS = [
   "A key page is rendering slowly as data grows. How would you diagnose and improve its performance?",
   "Describe a challenging technical trade-off you made in a UI, and how you evaluated the options.",
 ];
+
+// Placeholder for the real feedback call. Swap the body for the Gemini request
+// (e.g. `return await fetchFeedback(question, answer)`); the caller already
+// awaits it, so the loading state and flow stay unchanged.
+function generateFeedback(_question: string, _answer: string): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 1700));
+}
+
+type Phase = "answering" | "loading" | "feedback";
 
 export default function InterviewSessionPage({
   params,
@@ -33,18 +43,22 @@ export default function InterviewSessionPage({
     Array(total).fill(""),
   );
   const [draft, setDraft] = useState("");
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [phase, setPhase] = useState<Phase>("answering");
   const [finished, setFinished] = useState(false);
 
   const isLast = currentIndex === total - 1;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setAnswers((prev) => {
       const next = [...prev];
       next[currentIndex] = draft;
       return next;
     });
-    setShowFeedback(true);
+
+    // Show the "thinking" state, then reveal feedback once it's ready.
+    setPhase("loading");
+    await generateFeedback(QUESTIONS[currentIndex], draft);
+    setPhase("feedback");
   }
 
   function handleNext() {
@@ -55,7 +69,7 @@ export default function InterviewSessionPage({
     }
     setCurrentIndex((index) => index + 1);
     setDraft("");
-    setShowFeedback(false);
+    setPhase("answering");
   }
 
   return (
@@ -71,7 +85,9 @@ export default function InterviewSessionPage({
               question={QUESTIONS[currentIndex]}
             />
 
-            {showFeedback ? (
+            {phase === "loading" ? (
+              <FeedbackLoading />
+            ) : phase === "feedback" ? (
               <FeedbackPanel
                 answer={answers[currentIndex]}
                 isLast={isLast}
