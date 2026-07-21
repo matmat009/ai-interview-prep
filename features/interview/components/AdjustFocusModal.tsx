@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { CheckIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,22 +17,34 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
-// Same options as onboarding's InterviewTypeStep.
-const TYPE_ITEMS = [
-  { label: "Behavioral", value: "Behavioral" },
-  { label: "Technical/Coding", value: "Technical/Coding" },
-  { label: "System Design", value: "System Design" },
-  { label: "Case Study", value: "Case Study" },
-  { label: "Other", value: "Other" },
+// Same options as onboarding's InterviewTypeStep, with a one-line description.
+const TYPE_OPTIONS = [
+  {
+    value: "Behavioral",
+    title: "Behavioral",
+    description: "Past experiences, teamwork, and how you handle challenges",
+  },
+  {
+    value: "Technical/Coding",
+    title: "Technical/Coding",
+    description: "Coding problems and technical skill assessment",
+  },
+  {
+    value: "System Design",
+    title: "System Design",
+    description: "Architecture and designing large-scale systems",
+  },
+  {
+    value: "Case Study",
+    title: "Case Study",
+    description: "Real-world problem-solving and business scenarios",
+  },
+  {
+    value: "Other",
+    title: "Other",
+    description: "Specify your own custom focus area",
+  },
 ];
 
 export function AdjustFocusModal({
@@ -69,29 +84,57 @@ export function AdjustFocusModal({
           <DialogDescription>
             Tune this session only — your saved preferences stay the same.
           </DialogDescription>
+          <p className="text-xs text-muted-foreground">
+            This changes the role-specific questions in your session (Q2–4).
+            Your onboarding profile and general questions stay the same.
+          </p>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="interview-type">Interview type</Label>
-            <Select
-              value={draftType}
-              onValueChange={(v) => setDraftType(String(v))}
-              items={TYPE_ITEMS}
+            <Label>Interview type</Label>
+            <div
+              role="radiogroup"
+              aria-label="Interview type"
+              className="flex flex-col gap-2.5"
             >
-              <SelectTrigger id="interview-type" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {TYPE_ITEMS.map((it) => (
-                    <SelectItem key={it.value} value={it.value}>
-                      {it.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+              {TYPE_OPTIONS.map((option) => {
+                const selected = draftType === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setDraftType(option.value)}
+                    className={cn(
+                      "flex items-start justify-between gap-3 rounded-lg border p-3.5 text-left outline-none transition-colors",
+                      "focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      selected
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-card hover:bg-muted",
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <p
+                        className={cn(
+                          "text-sm font-medium",
+                          selected ? "text-primary" : "text-foreground",
+                        )}
+                      >
+                        {option.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {option.description}
+                      </p>
+                    </div>
+                    {selected && (
+                      <CheckIcon className="mt-0.5 size-4 shrink-0 text-primary" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">

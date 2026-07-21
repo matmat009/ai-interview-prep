@@ -19,13 +19,15 @@ import { Button } from "@/components/ui/button";
 const OVERALL_SCORE = 82;
 const OVERALL_LABEL = "Solid performance";
 
-const SCORES = [78, 85, 80, 84, 83];
+const SCORES = [78, 85, 80, 84, 82, 79, 83];
 const TAKEAWAYS = [
   "Warm, clear intro — tighten the pitch to about 60 seconds.",
   "Strong architecture reasoning; name the specific patterns you'd use.",
-  "Good state trade-offs; also say when you'd avoid a global store.",
+  "Good scalability instincts; be explicit about the caching trade-offs.",
   "Solid debugging steps; quantify the performance win.",
-  "Nice trade-off framing; connect it back to business impact.",
+  "Genuine motivation; tie your goals back to this role's growth path.",
+  "Reasonable range; anchor it to market data and the value you bring.",
+  "Honest and self-aware; pair the weakness with concrete progress.",
 ];
 
 const STRENGTHS = [

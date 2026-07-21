@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
+import { ThinkingIndicator } from "@/components/thinking-indicator";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -51,12 +52,26 @@ const REQUIRED_KEYS = new Set<keyof OnboardingAnswers>([
 const TOTAL_STEPS = ONBOARDING_STEP_KEYS.length; // 6 questions
 const REVIEW_INDEX = TOTAL_STEPS; // review screen sits right after them
 
+const SUBMIT_STATUSES = [
+  "Saving your profile...",
+  "Setting up your dashboard...",
+  "Almost there...",
+];
+
+// Placeholder for the real Supabase save. Swap the body for the persistence
+// call (e.g. `await saveProfile(answers)`); the caller awaits it, so the
+// loading state and redirect stay unchanged.
+function saveOnboarding(_answers: OnboardingAnswers): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 1700));
+}
+
 export function OnboardingWizard() {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers>(
     EMPTY_ONBOARDING_ANSWERS,
   );
+  const [submitting, setSubmitting] = useState(false);
 
   const isReviewStep = stepIndex === REVIEW_INDEX;
   const isFirstStep = stepIndex === 0;
@@ -83,9 +98,11 @@ export function OnboardingWizard() {
     setStepIndex((index) => Math.min(REVIEW_INDEX, index + 1));
   }
 
-  function handleSubmit() {
-    // Placeholder submit — Supabase persistence comes later.
+  async function handleSubmit() {
+    // Show the loading state, persist, then head into the interview flow.
+    setSubmitting(true);
     console.log("onboarding complete", answers);
+    await saveOnboarding(answers);
     router.push("/interview");
   }
 
@@ -113,7 +130,9 @@ export function OnboardingWizard() {
       </CardHeader>
 
       <CardContent>
-        {isReviewStep ? (
+        {submitting ? (
+          <ThinkingIndicator statuses={SUBMIT_STATUSES} />
+        ) : isReviewStep ? (
           <ReviewStep
             answers={answers}
             onEdit={setStepIndex}
@@ -130,18 +149,20 @@ export function OnboardingWizard() {
         )}
       </CardContent>
 
-      <CardFooter className="justify-between">
-        <Button variant="outline" onClick={handleBack} disabled={isFirstStep}>
-          <ArrowLeft />
-          Back
-        </Button>
-        {!isReviewStep && (
-          <Button onClick={handleNext} disabled={!isCurrentValid}>
-            Next
-            <ArrowRight />
+      {!submitting && (
+        <CardFooter className="justify-between">
+          <Button variant="outline" onClick={handleBack} disabled={isFirstStep}>
+            <ArrowLeft />
+            Back
           </Button>
-        )}
-      </CardFooter>
+          {!isReviewStep && (
+            <Button onClick={handleNext} disabled={!isCurrentValid}>
+              Next
+              <ArrowRight />
+            </Button>
+          )}
+        </CardFooter>
+      )}
     </Card>
   );
 }

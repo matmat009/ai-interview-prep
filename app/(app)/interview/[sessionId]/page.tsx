@@ -10,14 +10,16 @@ import { QuestionCard } from "@/features/interview/components/QuestionCard";
 import { SessionSummary } from "@/features/interview/components/SessionSummary";
 
 // Dummy question set for the dummy role/focus (Frontend Engineer · System Design).
-// Q1 is a warm-up; Q2–5 get progressively more specific. Replaced with real data
-// (keyed off the session + onboarding answers) in a later step.
+// Q1 warm-up; Q2–Q4 role/technical; Q5 career goals; Q6 compensation; Q7 closing.
+// Replaced with real data (keyed off the session + onboarding answers) later.
 const QUESTIONS = [
   "To warm up — tell me about yourself and what draws you to frontend engineering.",
   "Walk me through how you'd design the component architecture for a large, data-heavy dashboard.",
-  "How do you approach state management in a complex React app, and when would you reach for a global store versus local state?",
+  "How would you design a scalable client-side data layer — caching, syncing, and keeping the UI consistent as data updates?",
   "A key page is rendering slowly as data grows. How would you diagnose and improve its performance?",
-  "Describe a challenging technical trade-off you made in a UI, and how you evaluated the options.",
+  "Where do you see yourself in your career over the next few years?",
+  "What are your salary expectations for this role?",
+  "What's a weakness you're actively working to improve?",
 ];
 
 // Placeholder for the real feedback call. Swap the body for the Gemini request
