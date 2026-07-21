@@ -23,7 +23,7 @@ interface ReviewStepProps {
 
 export function ReviewStep({ answers, onEdit, onSubmit }: ReviewStepProps) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-lg font-semibold">Review your answers</h2>
         <p className="text-sm text-muted-foreground">

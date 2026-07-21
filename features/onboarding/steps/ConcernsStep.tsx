@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export function ConcernsStep({ value, onChange }: OnboardingStepProps) {
   return (
-    <fieldset className="flex flex-col gap-5">
+    <fieldset className="flex flex-col gap-6">
       <legend className="text-lg font-semibold">
         Is there anything specific you&apos;re nervous about or want to focus on?
       </legend>

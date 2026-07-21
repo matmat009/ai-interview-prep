@@ -66,13 +66,13 @@ export function ChoiceStep({
   const otherInvalid = selected === OTHER && otherText.trim() === "";
 
   return (
-    <fieldset className="flex flex-col gap-5">
+    <fieldset className="flex flex-col gap-6">
       <legend className="text-lg font-semibold">{title}</legend>
 
       <div
         role="radiogroup"
         aria-label={title}
-        className="grid gap-3 sm:grid-cols-2"
+        className="grid gap-4 sm:grid-cols-2"
       >
         {options.map((option) => (
           <OptionCard

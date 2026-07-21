@@ -90,7 +90,7 @@ export function OnboardingWizard() {
   }
 
   return (
-    <Card className="w-full max-w-xl">
+    <Card className="w-[800px] max-w-full border border-white/10 bg-card/60 shadow-2xl ring-0 backdrop-blur-xl">
       <CardHeader className="gap-4">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>

@@ -5,6 +5,7 @@ import { use, useState } from "react";
 import { AnswerInput } from "@/features/interview/components/AnswerInput";
 import { FeedbackLoading } from "@/features/interview/components/FeedbackLoading";
 import { FeedbackPanel } from "@/features/interview/components/FeedbackPanel";
+import { LeaveGuard } from "@/features/interview/components/LeaveGuard";
 import { QuestionCard } from "@/features/interview/components/QuestionCard";
 import { SessionSummary } from "@/features/interview/components/SessionSummary";
 
@@ -74,6 +75,9 @@ export default function InterviewSessionPage({
 
   return (
     <div className="flex w-full flex-1 flex-col items-center px-4 py-10">
+      {/* Warn before leaving while the session is still in progress. */}
+      <LeaveGuard active={!finished} />
+
       <div className="my-auto flex w-full max-w-2xl flex-col gap-5">
         {finished ? (
           <SessionSummary questions={QUESTIONS} />

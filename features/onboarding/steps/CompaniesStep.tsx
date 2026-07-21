@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 
 export function CompaniesStep({ value, onChange }: OnboardingStepProps) {
   return (
-    <fieldset className="flex flex-col gap-5">
+    <fieldset className="flex flex-col gap-6">
       <legend className="text-lg font-semibold">
         What companies are you interviewing with (if any)?
       </legend>
