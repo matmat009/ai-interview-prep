@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { SessionFocusOverride } from "@/types/interview";
+
+const DEFAULT_TYPE = "System Design";
 
 // Same options as onboarding's InterviewTypeStep, with a one-line description.
 const TYPE_OPTIONS = [
@@ -50,29 +53,30 @@ const TYPE_OPTIONS = [
 export function AdjustFocusModal({
   open,
   onOpenChange,
-  interviewType,
-  topic,
+  value,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  interviewType: string;
-  topic: string;
-  onSave: (interviewType: string, topic: string) => void;
+  value: SessionFocusOverride;
+  onSave: (override: SessionFocusOverride) => void;
 }) {
-  const [draftType, setDraftType] = useState(interviewType);
-  const [draftTopic, setDraftTopic] = useState(topic);
+  const [draftType, setDraftType] = useState(
+    value.interviewType ?? DEFAULT_TYPE,
+  );
+  const [draftTopic, setDraftTopic] = useState(value.specificTopic ?? "");
 
   // Re-sync the draft with the current values each time the modal opens.
   useEffect(() => {
     if (open) {
-      setDraftType(interviewType);
-      setDraftTopic(topic);
+      setDraftType(value.interviewType ?? DEFAULT_TYPE);
+      setDraftTopic(value.specificTopic ?? "");
     }
-  }, [open, interviewType, topic]);
+  }, [open, value.interviewType, value.specificTopic]);
 
   function handleSave() {
-    onSave(draftType, draftTopic.trim());
+    const specificTopic = draftTopic.trim();
+    onSave({ interviewType: draftType, specificTopic: specificTopic || undefined });
     onOpenChange(false);
   }
 

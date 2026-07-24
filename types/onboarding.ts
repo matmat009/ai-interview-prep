@@ -1,14 +1,8 @@
-// Shape of the data collected across the onboarding wizard.
-// Every answer is a plain string: when the user picks "Other", the free-text
-// value replaces the selected option's value, so the field stays a string.
-export interface OnboardingAnswers {
-  role: string;
-  experience: string;
-  interviewType: string;
-  timeline: string;
-  companies: string;
-  concerns: string;
-}
+// OnboardingAnswers is defined canonically in the shared types module; re-export
+// it here so existing `@/types/onboarding` imports keep working.
+import type { OnboardingAnswers } from "@/types/interview";
+
+export type { OnboardingAnswers };
 
 // The 6 answer keys in the order their steps appear in the wizard.
 export const ONBOARDING_STEP_KEYS = [

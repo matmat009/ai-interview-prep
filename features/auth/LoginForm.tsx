@@ -16,12 +16,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Dummy credentials for local testing only — no Supabase yet.
-const DEMO_EMAIL = "test@test.com";
-const DEMO_PASSWORD = "test1234";
 
 type Errors = {
   email?: string;
@@ -34,7 +31,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   function validate(): Errors {
     const next: Errors = {};
@@ -44,29 +41,39 @@ export function LoginForm() {
     return next;
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
-    setLoggedIn(false);
 
     const next = validate();
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
-    // Dummy authentication for local testing only — no Supabase yet.
-    if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
-      setLoggedIn(true);
-      console.log("login success", { email });
+    setSubmitting(true);
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      // TEMPORARY — REPLACE WITH SUPABASE CHECK LATER.
-      // Hardcoded onboarding status; the real check will read the user's profile.
-      const hasCompletedOnboarding = false;
-
-      router.push(hasCompletedOnboarding ? "/interview" : "/onboarding");
-    } else {
-      setFormError("Invalid email or password.");
-      console.log("login failed", { email });
+    if (error) {
+      setFormError(error.message);
+      setSubmitting(false);
+      return;
     }
+
+    // Route by onboarding status from the user's profile row.
+    let completed = false;
+    const userId = data.user?.id;
+    if (userId) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", userId)
+        .maybeSingle();
+      completed = profile?.onboarding_completed === true;
+    }
+    router.push(completed ? "/interview" : "/onboarding");
   }
 
   return (
@@ -135,17 +142,13 @@ export function LoginForm() {
               {formError}
             </p>
           )}
-          {loggedIn && (
-            <p className="rounded-md border border-violet-500/20 bg-violet-500/10 px-3 py-2 text-sm text-violet-300">
-              Logged in successfully.
-            </p>
-          )}
 
           <Button
             type="submit"
+            disabled={submitting}
             className="mt-2 w-full bg-violet-600 text-white hover:bg-violet-500"
           >
-            Log in
+            {submitting ? "Logging in…" : "Log in"}
           </Button>
         </form>
       </CardContent>

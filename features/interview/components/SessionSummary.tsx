@@ -14,37 +14,57 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { SessionItem } from "@/features/history/sessions";
 
-// Dummy aggregated results — replaced with real scoring once feedback is wired.
-const OVERALL_SCORE = 82;
-const OVERALL_LABEL = "Solid performance";
+function scoreLabel(score: number | null): string {
+  if (score === null) return "Session complete";
+  if (score >= 90) return "Excellent performance";
+  if (score >= 80) return "Solid performance";
+  if (score >= 70) return "Good, with room to grow";
+  return "Keep practicing";
+}
 
-const SCORES = [78, 85, 80, 84, 82, 79, 83];
-const TAKEAWAYS = [
-  "Warm, clear intro — tighten the pitch to about 60 seconds.",
-  "Strong architecture reasoning; name the specific patterns you'd use.",
-  "Good scalability instincts; be explicit about the caching trade-offs.",
-  "Solid debugging steps; quantify the performance win.",
-  "Genuine motivation; tie your goals back to this role's growth path.",
-  "Reasonable range; anchor it to market data and the value you bring.",
-  "Honest and self-aware; pair the weakness with concrete progress.",
-];
+function dedupe(list: string[]): string[] {
+  const seen = new Set<string>();
+  return list.filter((text) => {
+    const key = text.trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
-const STRENGTHS = [
-  "You structure answers well — context first, then reasoning.",
-  "You back your claims with concrete, believable examples.",
-  "You stay calm and on-topic on open-ended prompts.",
-];
+// Strengths come from the best-answered questions, improvements from the
+// weakest — so the aggregates reflect what actually went well / badly.
+function topStrengths(items: SessionItem[], limit = 3): string[] {
+  return dedupe(
+    [...items]
+      .sort((a, b) => (b.feedback?.score ?? 0) - (a.feedback?.score ?? 0))
+      .flatMap((i) => i.feedback?.strengths ?? []),
+  ).slice(0, limit);
+}
 
-const IMPROVEMENTS = [
-  "Quantify impact with specific metrics wherever you can.",
-  "Call out trade-offs explicitly and why you chose your path.",
-  "Tighten longer answers — lead with the headline.",
-];
+function topImprovements(items: SessionItem[], limit = 3): string[] {
+  return dedupe(
+    [...items]
+      .sort((a, b) => (a.feedback?.score ?? 0) - (b.feedback?.score ?? 0))
+      .flatMap((i) => i.feedback?.improvements ?? []),
+  ).slice(0, limit);
+}
 
-export function SessionSummary({ questions }: { questions: string[] }) {
+export function SessionSummary({
+  items,
+  overallScore,
+}: {
+  items: SessionItem[];
+  overallScore: number | null;
+}) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<number | null>(null);
+
+  const ordered = [...items].sort((a, b) => a.order - b.order);
+  const strengths = topStrengths(ordered);
+  const improvements = topImprovements(ordered);
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,75 +75,85 @@ export function SessionSummary({ questions }: { questions: string[] }) {
         </div>
         <p className="mt-4 text-sm text-muted-foreground">Session complete</p>
         <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
-          {OVERALL_SCORE}%
+          {overallScore !== null ? `${overallScore}%` : "—"}
         </p>
-        <p className="mt-1 text-sm font-medium text-primary">{OVERALL_LABEL}</p>
+        <p className="mt-1 text-sm font-medium text-primary">
+          {scoreLabel(overallScore)}
+        </p>
       </div>
 
       {/* Question recap — collapsed by default, expand for the takeaway */}
-      <div className="rounded-2xl border border-white/10 bg-card/60 p-2 shadow-2xl backdrop-blur-xl">
-        <div className="px-3 py-2">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Question recap
-          </span>
-        </div>
-        <ul>
-          {questions.map((question, i) => {
-            const open = expanded === i;
-            return (
-              <li
-                key={i}
-                className="border-b border-white/5 last:border-0"
-              >
-                <button
-                  type="button"
-                  onClick={() => setExpanded(open ? null : i)}
-                  aria-expanded={open}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+      {ordered.length > 0 && (
+        <div className="rounded-2xl border border-white/10 bg-card/60 p-2 shadow-2xl backdrop-blur-xl">
+          <div className="px-3 py-2">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Question recap
+            </span>
+          </div>
+          <ul>
+            {ordered.map((item, i) => {
+              const open = expanded === i;
+              return (
+                <li
+                  key={item.order}
+                  className="border-b border-white/5 last:border-0"
                 >
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-medium text-primary">
-                    {i + 1}
-                  </span>
-                  <span
-                    className={`flex-1 text-sm ${open ? "" : "truncate"}`}
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(open ? null : i)}
+                    aria-expanded={open}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-white/5"
                   >
-                    {question}
-                  </span>
-                  <span className="shrink-0 text-xs font-medium text-muted-foreground tabular-nums">
-                    {SCORES[i]}%
-                  </span>
-                  <ChevronDown
-                    className={`size-4 shrink-0 text-muted-foreground transition-transform ${
-                      open ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {open && (
-                  <p className="pr-3 pb-3 pl-12 text-sm leading-relaxed text-muted-foreground">
-                    {TAKEAWAYS[i]}
-                  </p>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-medium text-primary">
+                      {item.order}
+                    </span>
+                    <span className={`flex-1 text-sm ${open ? "" : "truncate"}`}>
+                      {item.question}
+                    </span>
+                    {typeof item.feedback?.score === "number" && (
+                      <span className="shrink-0 text-xs font-medium text-muted-foreground tabular-nums">
+                        {item.feedback.score}%
+                      </span>
+                    )}
+                    <ChevronDown
+                      className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                        open ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {open && item.feedback?.summary && (
+                    <p className="pr-3 pb-3 pl-12 text-sm leading-relaxed text-muted-foreground">
+                      {item.feedback.summary}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
-      {/* Aggregated strengths + improvements */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <SummaryCard
-          icon={CheckCircle2}
-          tone="positive"
-          title="Key strengths"
-          items={STRENGTHS}
-        />
-        <SummaryCard
-          icon={TrendingUp}
-          tone="accent"
-          title="Key areas to improve"
-          items={IMPROVEMENTS}
-        />
-      </div>
+      {/* Aggregated strengths + improvements, derived from the real feedback */}
+      {(strengths.length > 0 || improvements.length > 0) && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {strengths.length > 0 && (
+            <SummaryCard
+              icon={CheckCircle2}
+              tone="positive"
+              title="Key strengths"
+              items={strengths}
+            />
+          )}
+          {improvements.length > 0 && (
+            <SummaryCard
+              icon={TrendingUp}
+              tone="accent"
+              title="Key areas to improve"
+              items={improvements}
+            />
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

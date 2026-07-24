@@ -1,31 +1,98 @@
-// Dummy session data for the History page. Shape mirrors what's used elsewhere
-// (role, date, score, status). Replaced with real persisted sessions later.
+// Data layer for persisted interview sessions (Supabase `sessions` table).
+// Replaces the previous in-memory dummy data.
 
-export type SessionStatus = "Completed" | "In Progress" | "Scheduled";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type {
+  Feedback,
+  QuestionCategory,
+  SessionFocusOverride,
+} from "@/types/interview";
+
+// One answered question stored in sessions.items (jsonb array).
+export type SessionItem = {
+  order: number;
+  category: QuestionCategory;
+  question: string;
+  answer: string;
+  feedback: Feedback;
+};
+
+// Raw row shape from the sessions table.
+export type SessionRow = {
+  id: string;
+  user_id: string;
+  role: string | null;
+  focus_override: SessionFocusOverride | null;
+  items: SessionItem[] | null;
+  status: "in-progress" | "completed";
+  overall_score: number | null;
+  created_at: string;
+  completed_at: string | null;
+};
+
+// Display shape used by the History cards / list.
+export type SessionStatus = "Completed" | "In Progress";
 
 export type Session = {
   id: string;
   role: string;
   focus: string;
-  date: string; // ISO (YYYY-MM-DD)
-  score: number | null; // null unless Completed
+  date: string; // ISO timestamp
+  score: number | null;
   status: SessionStatus;
 };
 
-export const SESSIONS: Session[] = [
-  { id: "s-frontend-01", role: "Frontend Engineer", focus: "System Design", date: "2026-07-19", score: 88, status: "Completed" },
-  { id: "s-backend-01", role: "Backend Engineer", focus: "Behavioral", date: "2026-07-17", score: 76, status: "Completed" },
-  { id: "s-pm-01", role: "Product Manager", focus: "Case Study", date: "2026-07-16", score: null, status: "In Progress" },
-  { id: "s-data-01", role: "Data Scientist", focus: "Technical", date: "2026-07-12", score: 91, status: "Completed" },
-  { id: "s-devops-01", role: "DevOps Engineer", focus: "System Design", date: "2026-07-23", score: null, status: "Scheduled" },
-  { id: "s-fullstack-01", role: "Full Stack Engineer", focus: "System Design", date: "2026-07-08", score: 82, status: "Completed" },
-  { id: "s-em-01", role: "Engineering Manager", focus: "Behavioral", date: "2026-07-05", score: 79, status: "Completed" },
-  { id: "s-mobile-01", role: "Mobile Engineer", focus: "Technical", date: "2026-07-25", score: null, status: "Scheduled" },
-  { id: "s-ml-01", role: "Machine Learning Engineer", focus: "Technical", date: "2026-06-30", score: 85, status: "Completed" },
-];
+// Mean of the per-question feedback scores — the session's overall score.
+// Used both for what's shown on screen and what's persisted, so they can't drift.
+export function averageScore(items: SessionItem[]): number | null {
+  const scores = items
+    .map((i) => i.feedback?.score)
+    .filter((s): s is number => typeof s === "number");
+  if (scores.length === 0) return null;
+  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+}
 
-export const ROLES: string[] = Array.from(new Set(SESSIONS.map((s) => s.role)));
+export function toDisplaySession(row: SessionRow): Session {
+  const focus =
+    row.focus_override?.specificTopic?.trim() ||
+    row.focus_override?.interviewType?.trim() ||
+    "General practice";
 
-export function getSessionById(id: string): Session | undefined {
-  return SESSIONS.find((s) => s.id === id);
+  return {
+    id: row.id,
+    role: row.role?.trim() || "Interview",
+    focus,
+    date: row.created_at,
+    score: row.overall_score,
+    status: row.status === "completed" ? "Completed" : "In Progress",
+  };
+}
+
+export async function fetchSessions(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<SessionRow[]> {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as SessionRow[];
+}
+
+// RLS restricts this to the caller's own sessions, so a missing/foreign id
+// simply comes back null.
+export async function fetchSession(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<SessionRow | null> {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as SessionRow) ?? null;
 }

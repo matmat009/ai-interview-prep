@@ -53,7 +53,6 @@ export function formatSessionDate(iso: string): string {
 const STATUS_DOT: Record<SessionStatus, string> = {
   Completed: "bg-emerald-400",
   "In Progress": "bg-amber-400",
-  Scheduled: "bg-sky-400",
 };
 
 // Legible on both a bright gradient overlay and a dark list row.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { CheckIcon } from "lucide-react";
 
@@ -33,6 +33,8 @@ export function ChoiceStep({
   otherLabel = "Other",
   otherPlaceholder = "Tell us more…",
 }: ChoiceStepProps) {
+  // Unique per instance — the settings page renders several ChoiceSteps at once.
+  const otherId = useId();
   const presetValues = options.map((option) => option.value);
 
   // Derive the initial UI mode from the stored answer so selections survive
@@ -91,9 +93,9 @@ export function ChoiceStep({
 
       {selected === OTHER && (
         <div className="flex flex-col gap-2">
-          <Label htmlFor="onboarding-other">{otherLabel}</Label>
+          <Label htmlFor={otherId}>{otherLabel}</Label>
           <Input
-            id="onboarding-other"
+            id={otherId}
             autoFocus
             value={otherText}
             placeholder={otherPlaceholder}

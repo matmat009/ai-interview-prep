@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import Link from "next/link";
@@ -16,9 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
-  ROLES,
-  SESSIONS,
+  fetchSessions,
+  toDisplaySession,
   type Session,
   type SessionStatus,
 } from "@/features/history/sessions";
@@ -43,12 +44,6 @@ const STATUS_ITEMS: Option[] = [
   { label: "Any status", value: "all" },
   { label: "Completed", value: "Completed" },
   { label: "In Progress", value: "In Progress" },
-  { label: "Scheduled", value: "Scheduled" },
-];
-
-const ROLE_ITEMS: Option[] = [
-  { label: "All Roles", value: "all" },
-  ...ROLES.map((r) => ({ label: r, value: r })),
 ];
 
 export function HistoryBrowser() {
@@ -58,9 +53,55 @@ export function HistoryBrowser() {
   const [role, setRole] = useState("all");
   const [view, setView] = useState<"grid" | "list">("grid");
 
+  const [allSessions, setAllSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Load this user's sessions (newest first).
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          if (active) {
+            setLoadError("Sign in to see your interview history.");
+            setLoading(false);
+          }
+          return;
+        }
+        const rows = await fetchSessions(supabase, user.id);
+        if (!active) return;
+        setAllSessions(rows.map(toDisplaySession));
+        setLoading(false);
+      } catch (e) {
+        if (!active) return;
+        setLoadError(e instanceof Error ? e.message : String(e));
+        setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const roleItems: Option[] = useMemo(
+    () => [
+      { label: "All Roles", value: "all" },
+      ...Array.from(new Set(allSessions.map((s) => s.role))).map((r) => ({
+        label: r,
+        value: r,
+      })),
+    ],
+    [allSessions],
+  );
+
   const sessions = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const filtered = SESSIONS.filter((s) => {
+    const filtered = allSessions.filter((s) => {
       if (q && !s.role.toLowerCase().includes(q)) return false;
       if (status !== "all" && s.status !== status) return false;
       if (role !== "all" && s.role !== role) return false;
@@ -72,7 +113,7 @@ export function HistoryBrowser() {
       const db = new Date(b.date).getTime();
       return sort === "recent" ? db - da : da - db;
     });
-  }, [query, sort, status, role]);
+  }, [allSessions, query, sort, status, role]);
 
   return (
     <div className="flex flex-col gap-5 px-4 py-4 md:px-6 md:py-6">
@@ -116,7 +157,7 @@ export function HistoryBrowser() {
           <FilterSelect
             value={role}
             onChange={setRole}
-            items={ROLE_ITEMS}
+            items={roleItems}
             width="w-[180px]"
           />
           <div className="flex items-center rounded-md border border-input bg-card/60 p-0.5 backdrop-blur">
@@ -144,11 +185,24 @@ export function HistoryBrowser() {
       </p>
 
       {/* Content */}
-      {sessions.length === 0 ? (
+      {loading ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-card/40 py-16 text-center backdrop-blur">
-          <p className="font-medium">No sessions found</p>
+          <p className="text-sm text-muted-foreground">Loading sessions…</p>
+        </div>
+      ) : loadError ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-card/40 py-16 text-center backdrop-blur">
+          <p className="font-medium">Couldn&apos;t load your history</p>
+          <p className="mt-1 text-sm text-muted-foreground">{loadError}</p>
+        </div>
+      ) : sessions.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-card/40 py-16 text-center backdrop-blur">
+          <p className="font-medium">
+            {allSessions.length === 0 ? "No sessions yet" : "No sessions found"}
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Try adjusting your search or filters.
+            {allSessions.length === 0
+              ? "Start an interview and it'll show up here."
+              : "Try adjusting your search or filters."}
           </p>
         </div>
       ) : view === "grid" ? (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,10 +27,13 @@ type Errors = {
 };
 
 export function SignupForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<Errors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   function validate(): Errors {
     const next: Errors = {};
@@ -42,14 +47,26 @@ export function SignupForm() {
     return next;
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setFormError(null);
+
     const next = validate();
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
-    // No Supabase yet — dummy local handler.
-    console.log("signup", { email, password });
+    setSubmitting(true);
+    const supabase = getSupabaseBrowserClient();
+    const { error } = await supabase.auth.signUp({ email, password });
+
+    if (error) {
+      setFormError(error.message);
+      setSubmitting(false);
+      return;
+    }
+
+    // New users always onboard first.
+    router.push("/onboarding");
   }
 
   return (
@@ -140,11 +157,18 @@ export function SignupForm() {
             )}
           </div>
 
+          {formError && (
+            <p className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+              {formError}
+            </p>
+          )}
+
           <Button
             type="submit"
+            disabled={submitting}
             className="mt-2 w-full bg-violet-600 text-white hover:bg-violet-500"
           >
-            Create account
+            {submitting ? "Creating account…" : "Create account"}
           </Button>
         </form>
       </CardContent>

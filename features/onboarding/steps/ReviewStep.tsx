@@ -19,9 +19,15 @@ interface ReviewStepProps {
   answers: OnboardingAnswers;
   onEdit: (stepIndex: number) => void;
   onSubmit: () => void;
+  error?: string | null;
 }
 
-export function ReviewStep({ answers, onEdit, onSubmit }: ReviewStepProps) {
+export function ReviewStep({
+  answers,
+  onEdit,
+  onSubmit,
+  error,
+}: ReviewStepProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -63,6 +69,12 @@ export function ReviewStep({ answers, onEdit, onSubmit }: ReviewStepProps) {
           );
         })}
       </dl>
+
+      {error && (
+        <p className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {error}
+        </p>
+      )}
 
       <Button onClick={onSubmit} className="w-full">
         Submit

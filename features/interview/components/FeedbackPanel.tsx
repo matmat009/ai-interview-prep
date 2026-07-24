@@ -11,36 +11,31 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
-// Dummy feedback, shaped the way real AI feedback will be (distinct sections
-// rather than one paragraph). Swapped for model output in a later step.
-const SUMMARY =
-  "Solid answer overall — you communicated clearly and stayed on topic. A few tweaks would take it from good to great.";
-
-const STRENGTHS = [
-  "Clear structure — you set up context before walking through your reasoning.",
-  "Grounded your points with concrete, believable examples.",
-];
-
-const IMPROVEMENTS = [
-  "Add specific metrics (e.g. load time, bundle size) to quantify the impact.",
-  "Tie the answer back to the trade-offs and why you chose your approach.",
-];
+import type { Feedback } from "@/types/interview";
 
 export function FeedbackPanel({
+  feedback,
   answer,
   isLast,
   onNext,
 }: {
+  feedback: Feedback;
   answer: string;
   isLast: boolean;
   onNext: () => void;
 }) {
   return (
     <div className="w-full rounded-2xl border border-white/10 bg-card/60 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-      <div className="flex items-center gap-2">
-        <Sparkles className="size-4 text-primary" />
-        <span className="text-sm font-medium text-primary">Feedback</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-4 text-primary" />
+          <span className="text-sm font-medium text-primary">Feedback</span>
+        </div>
+        {typeof feedback.score === "number" && (
+          <span className="text-sm font-semibold tabular-nums">
+            {feedback.score}%
+          </span>
+        )}
       </div>
 
       {/* The user's submitted answer, for context alongside the feedback. */}
@@ -55,21 +50,27 @@ export function FeedbackPanel({
         </div>
       )}
 
-      <p className="mt-5 text-base leading-relaxed text-foreground">{SUMMARY}</p>
+      <p className="mt-5 text-base leading-relaxed text-foreground">
+        {feedback.summary}
+      </p>
 
       <div className="mt-6 space-y-5">
-        <FeedbackSection
-          icon={CheckCircle2}
-          tone="positive"
-          title="Strengths"
-          items={STRENGTHS}
-        />
-        <FeedbackSection
-          icon={TrendingUp}
-          tone="accent"
-          title="Areas to improve"
-          items={IMPROVEMENTS}
-        />
+        {feedback.strengths.length > 0 && (
+          <FeedbackSection
+            icon={CheckCircle2}
+            tone="positive"
+            title="Strengths"
+            items={feedback.strengths}
+          />
+        )}
+        {feedback.improvements.length > 0 && (
+          <FeedbackSection
+            icon={TrendingUp}
+            tone="accent"
+            title="Areas to improve"
+            items={feedback.improvements}
+          />
+        )}
       </div>
 
       <div className="mt-7 flex justify-end">

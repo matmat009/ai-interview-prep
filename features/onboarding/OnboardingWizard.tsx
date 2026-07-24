@@ -19,6 +19,7 @@ import {
   type OnboardingAnswers,
   type OnboardingStepProps,
 } from "@/types/onboarding";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 import { CompaniesStep } from "./steps/CompaniesStep";
 import { ConcernsStep } from "./steps/ConcernsStep";
@@ -58,13 +59,6 @@ const SUBMIT_STATUSES = [
   "Almost there...",
 ];
 
-// Placeholder for the real Supabase save. Swap the body for the persistence
-// call (e.g. `await saveProfile(answers)`); the caller awaits it, so the
-// loading state and redirect stay unchanged.
-function saveOnboarding(_answers: OnboardingAnswers): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 1700));
-}
-
 export function OnboardingWizard() {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
@@ -72,6 +66,7 @@ export function OnboardingWizard() {
     EMPTY_ONBOARDING_ANSWERS,
   );
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const isReviewStep = stepIndex === REVIEW_INDEX;
   const isFirstStep = stepIndex === 0;
@@ -99,10 +94,42 @@ export function OnboardingWizard() {
   }
 
   async function handleSubmit() {
-    // Show the loading state, persist, then head into the interview flow.
+    setSubmitError(null);
     setSubmitting(true);
-    console.log("onboarding complete", answers);
-    await saveOnboarding(answers);
+
+    const supabase = getSupabaseBrowserClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setSubmitError(
+        "You need to be signed in to save your profile. Please log in again.",
+      );
+      setSubmitting(false);
+      return;
+    }
+
+    // Upsert so it works for a first-time save or a later re-submit/edit.
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      role: answers.role,
+      experience: answers.experience,
+      interview_type: answers.interviewType,
+      timeline: answers.timeline,
+      companies: answers.companies,
+      concerns: answers.concerns,
+      onboarding_completed: true,
+    });
+
+    if (error) {
+      setSubmitError(error.message);
+      setSubmitting(false);
+      return;
+    }
+
+    // Only navigate once the write succeeds.
     router.push("/interview");
   }
 
@@ -137,6 +164,7 @@ export function OnboardingWizard() {
             answers={answers}
             onEdit={setStepIndex}
             onSubmit={handleSubmit}
+            error={submitError}
           />
         ) : (
           StepComponent &&
