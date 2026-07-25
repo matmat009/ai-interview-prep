@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Check } from "lucide-react";
+import { Briefcase, Check, NotebookPen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -115,53 +115,102 @@ export function InterviewProfileSection() {
   }
 
   return (
-    <section className="w-full max-w-3xl rounded-2xl border border-white/10 bg-card/60 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-      <header>
-        <p className="text-sm text-muted-foreground">
-          These answers shape the questions and feedback in your sessions.
-        </p>
-      </header>
+    <div className="w-full max-w-3xl">
+      <p className="text-sm text-muted-foreground">
+        These answers shape the questions and feedback in your sessions.
+      </p>
 
       {loading ? (
-        <p className="mt-8 text-sm text-muted-foreground">
-          Loading your profile…
-        </p>
+        <div className="mt-6 rounded-2xl border border-white/10 bg-card/60 p-6 shadow-2xl backdrop-blur-xl">
+          <p className="text-sm text-muted-foreground">
+            Loading your profile…
+          </p>
+        </div>
       ) : (
         <>
-          <div className="mt-8 flex flex-col gap-10">
-            <RoleStep
-              value={answers.role}
-              onChange={(v) => update("role", v)}
-            />
-            <ExperienceStep
-              value={answers.experience}
-              onChange={(v) => update("experience", v)}
-            />
-            <InterviewTypeStep
-              value={answers.interviewType}
-              onChange={(v) => update("interviewType", v)}
-            />
-            <TimelineStep
-              value={answers.timeline}
-              onChange={(v) => update("timeline", v)}
-            />
-            <CompaniesStep
-              value={answers.companies}
-              onChange={(v) => update("companies", v)}
-            />
-            <ConcernsStep
-              value={answers.concerns}
-              onChange={(v) => update("concerns", v)}
-            />
+          <div className="mt-6 flex flex-col gap-6">
+            {/* Your Profile — the essentials every question is built from. */}
+            <section className="overflow-hidden rounded-2xl border border-white/10 bg-card/60 shadow-2xl backdrop-blur-xl">
+              <header className="flex items-center gap-3 border-b border-white/5 px-6 py-4 sm:px-7">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Briefcase className="size-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold tracking-tight">
+                    Your Profile
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    The essentials that shape every question.
+                  </p>
+                </div>
+              </header>
+              <div className="divide-y divide-white/5">
+                <div className="px-6 py-6 sm:px-7">
+                  <RoleStep
+                    value={answers.role}
+                    onChange={(v) => update("role", v)}
+                  />
+                </div>
+                <div className="px-6 py-6 sm:px-7">
+                  <ExperienceStep
+                    value={answers.experience}
+                    onChange={(v) => update("experience", v)}
+                  />
+                </div>
+                <div className="px-6 py-6 sm:px-7">
+                  <InterviewTypeStep
+                    value={answers.interviewType}
+                    onChange={(v) => update("interviewType", v)}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Additional Context — optional details that fine-tune practice. */}
+            <section className="overflow-hidden rounded-2xl border border-white/10 bg-card/60 shadow-2xl backdrop-blur-xl">
+              <header className="flex items-center gap-3 border-b border-white/5 px-6 py-4 sm:px-7">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <NotebookPen className="size-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold tracking-tight">
+                    Additional Context
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Optional details that fine-tune your sessions.
+                  </p>
+                </div>
+              </header>
+              <div className="divide-y divide-white/5">
+                <div className="px-6 py-6 sm:px-7">
+                  <TimelineStep
+                    value={answers.timeline}
+                    onChange={(v) => update("timeline", v)}
+                  />
+                </div>
+                <div className="px-6 py-6 sm:px-7">
+                  <CompaniesStep
+                    value={answers.companies}
+                    onChange={(v) => update("companies", v)}
+                  />
+                </div>
+                <div className="px-6 py-6 sm:px-7">
+                  <ConcernsStep
+                    value={answers.concerns}
+                    onChange={(v) => update("concerns", v)}
+                  />
+                </div>
+              </div>
+            </section>
           </div>
 
           {error && (
-            <p className="mt-8 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+            <p className="mt-6 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
               {error}
             </p>
           )}
 
-          <div className="mt-8 flex items-center justify-end gap-4">
+          <div className="mt-6 flex items-center justify-end gap-4">
             {saved && (
               <span className="flex items-center gap-1.5 text-sm text-emerald-400">
                 <Check className="size-4" />
@@ -174,6 +223,6 @@ export function InterviewProfileSection() {
           </div>
         </>
       )}
-    </section>
+    </div>
   );
 }
