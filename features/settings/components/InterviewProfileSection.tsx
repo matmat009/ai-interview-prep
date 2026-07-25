@@ -117,8 +117,7 @@ export function InterviewProfileSection() {
   return (
     <section className="w-full max-w-3xl rounded-2xl border border-white/10 bg-card/60 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
       <header>
-        <h2 className="text-lg font-semibold">Interview Profile</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           These answers shape the questions and feedback in your sessions.
         </p>
       </header>

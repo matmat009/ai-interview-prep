@@ -117,9 +117,8 @@ export function HistoryBrowser() {
 
   return (
     <div className="flex flex-col gap-5 px-4 py-4 md:px-6 md:py-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">History</h1>
+      {/* Actions — header bar already shows the "History" title */}
+      <div className="flex items-center justify-end">
         <Button
           nativeButton={false}
           render={<Link href="/interview" />}

@@ -10,7 +10,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/interview": "Interview",
   "/history": "History",
   "/question-bank": "Question Bank",
-  "/settings": "Settings",
+  "/settings": "Interview Profile",
 }
 
 export function SiteHeader() {

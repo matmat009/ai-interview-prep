@@ -21,6 +21,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Errors = {
+  name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -28,6 +29,7 @@ type Errors = {
 
 export function SignupForm() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,6 +39,7 @@ export function SignupForm() {
 
   function validate(): Errors {
     const next: Errors = {};
+    if (!name.trim()) next.name = "Full name is required.";
     if (!email) next.email = "Email is required.";
     else if (!EMAIL_RE.test(email)) next.email = "Enter a valid email address.";
     if (!password) next.password = "Password is required.";
@@ -57,7 +60,12 @@ export function SignupForm() {
 
     setSubmitting(true);
     const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      // Stored in auth user_metadata — no extra table/column needed.
+      options: { data: { full_name: name.trim() } },
+    });
 
     if (error) {
       setFormError(error.message);
@@ -82,6 +90,30 @@ export function SignupForm() {
 
       <CardContent>
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="name" className="text-white/70">
+              Full name
+            </Label>
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              placeholder="Ada Lovelace"
+              value={name}
+              aria-invalid={!!errors.name}
+              onChange={(event) => {
+                setName(event.target.value);
+                if (errors.name)
+                  setErrors((prev) => ({ ...prev, name: undefined }));
+              }}
+              className="text-white placeholder:text-white/30"
+            />
+            {errors.name && (
+              <p className="text-xs text-red-400">{errors.name}</p>
+            )}
+          </div>
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="email" className="text-white/70">
               Email

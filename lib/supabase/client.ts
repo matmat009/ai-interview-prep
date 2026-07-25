@@ -1,4 +1,5 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Browser-side Supabase client — uses the public URL + anon key, which are safe
 // to expose to the browser (NEXT_PUBLIC_* are inlined into the client bundle).
@@ -16,7 +17,9 @@ export function getSupabaseBrowserClient(): SupabaseClient {
         "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY — add them to .env.local.",
       );
     }
-    browserClient = createClient(url, anonKey);
+    // Cookie-based session storage (not localStorage) so the SSR middleware
+    // can read the session and protect routes.
+    browserClient = createBrowserClient(url, anonKey);
   }
   return browserClient;
 }

@@ -25,11 +25,6 @@ import {
 } from "lucide-react"
 
 const data = {
-  user: {
-    name: "Maya Chen",
-    email: "maya@preppilot.app",
-    avatar: "/avatars/maya.jpg",
-  },
   navMain: [
     {
       title: "Interview",
@@ -47,7 +42,7 @@ const data = {
       icon: <LibraryIcon />,
     },
     {
-      title: "Settings",
+      title: "Interview Profile",
       url: "/settings",
       icon: <Settings2Icon />,
     },
@@ -75,7 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavRecentSessions />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )
