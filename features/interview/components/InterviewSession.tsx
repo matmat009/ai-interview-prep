@@ -7,8 +7,13 @@ import { RotateCcw, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { averageScore, type SessionItem } from "@/features/history/sessions";
+import {
+  averageScore,
+  fetchSession,
+  type SessionItem,
+} from "@/features/history/sessions";
 import { pickConcernIndices } from "@/features/interview/concern-plan";
+import { deriveResumeState } from "@/features/interview/resume";
 import type {
   Feedback,
   InterviewQuestion,
@@ -108,7 +113,7 @@ export function InterviewSession({
       const supabase = getSupabaseBrowserClient();
       const { error } = await supabase
         .from("sessions")
-        .update({ items })
+        .update({ items, updated_at: new Date().toISOString() })
         .eq("id", sessionId);
       if (error) console.error("Failed to save session items:", error.message);
     } catch (e) {
@@ -130,6 +135,7 @@ export function InterviewSession({
           status: "completed",
           overall_score: overallScore,
           completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .eq("id", sessionId);
       if (error) console.error("Failed to complete session:", error.message);
@@ -141,7 +147,9 @@ export function InterviewSession({
   const isLast = currentIndex === TOTAL - 1;
   const questionText = questions[currentIndex];
 
-  // Load the signed-in user's profile — questions/feedback are tailored to it.
+  // Load the signed-in user's profile and any saved progress for this session.
+  // Questions/feedback are tailored to the profile; a session with saved items
+  // resumes at the next unanswered question instead of restarting.
   // Defensive: bounce to onboarding if there's no completed profile.
   useEffect(() => {
     let active = true;
@@ -154,20 +162,46 @@ export function InterviewSession({
         router.replace("/login");
         return;
       }
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
+      const [{ data }, sessionRow] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+        fetchSession(supabase, sessionId),
+      ]);
       if (!active) return;
       if (!data || !data.onboarding_completed) {
         router.replace("/onboarding");
         return;
       }
+      // Completed sessions are read-only — send them to the review page.
+      if (sessionRow?.status === "completed") {
+        router.replace(`/history/${sessionId}`);
+        return;
+      }
+
+      // Restore whatever was answered so we continue from the next unanswered
+      // question rather than restarting (which would overwrite saved answers).
+      const resume = deriveResumeState(sessionRow?.items, TOTAL);
+      itemsRef.current = resume.items;
+      // Ensure the just-in-time generator fires for the resumed index and never
+      // re-generates a question that was already answered.
+      requestedRef.current = resume.currentIndex - 1;
       // Decide up front which questions address their stated concern (1-2).
       concernIndicesRef.current = new Set(
         data.concerns?.trim() ? pickConcernIndices(TOTAL) : [],
       );
+
+      setQuestions(resume.questions);
+      setAnswers(resume.answers);
+      setItems(resume.items);
+      setCurrentIndex(resume.currentIndex);
+      if (resume.finished) {
+        // Every question answered but the row was never marked complete (e.g. a
+        // crash before the completion write) — finalize and show the summary.
+        setFinished(true);
+        void completeSession();
+      }
+
+      // Set profile LAST so the generator effect below sees the restored
+      // currentIndex/finished when it first runs.
       setProfile({
         role: data.role ?? "",
         experience: data.experience ?? "",
@@ -180,7 +214,8 @@ export function InterviewSession({
     return () => {
       active = false;
     };
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, sessionId]);
 
   async function loadQuestion(index: number) {
     if (!profile) return;

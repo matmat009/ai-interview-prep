@@ -18,17 +18,21 @@ import {
 } from "@/components/ui/select";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
+  deleteSession,
   fetchSessions,
+  hasUsedTodaysAction,
   toDisplaySession,
   type Session,
   type SessionStatus,
 } from "@/features/history/sessions";
 import {
+  SessionActionsMenu,
   SessionCard,
   SessionStatusBadge,
   formatSessionDate,
   roleStyle,
 } from "@/features/history/components/SessionCard";
+import { DeleteSessionDialog } from "@/features/history/components/DeleteSessionDialog";
 
 type SortKey = "recent" | "oldest" | "score";
 type StatusFilter = "all" | SessionStatus;
@@ -56,8 +60,14 @@ export function HistoryBrowser() {
   const [allSessions, setAllSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Gates whether "Continue" is offered on in-progress cards.
+  const [usedToday, setUsedToday] = useState(false);
+  // Delete confirmation (one dialog for the whole list).
+  const [pendingDelete, setPendingDelete] = useState<Session | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // Load this user's sessions (newest first).
+  // Load this user's sessions (newest first) + today's-action state.
   useEffect(() => {
     let active = true;
     (async () => {
@@ -73,9 +83,13 @@ export function HistoryBrowser() {
           }
           return;
         }
-        const rows = await fetchSessions(supabase, user.id);
+        const [rows, used] = await Promise.all([
+          fetchSessions(supabase, user.id),
+          hasUsedTodaysAction(supabase, user.id),
+        ]);
         if (!active) return;
         setAllSessions(rows.map(toDisplaySession));
+        setUsedToday(used);
         setLoading(false);
       } catch (e) {
         if (!active) return;
@@ -87,6 +101,22 @@ export function HistoryBrowser() {
       active = false;
     };
   }, []);
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      await deleteSession(supabase, pendingDelete.id);
+      setAllSessions((prev) => prev.filter((s) => s.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const roleItems: Option[] = useMemo(
     () => [
@@ -207,12 +237,35 @@ export function HistoryBrowser() {
       ) : view === "grid" ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {sessions.map((s) => (
-            <SessionCard key={s.id} session={s} />
+            <SessionCard
+              key={s.id}
+              session={s}
+              usedToday={usedToday}
+              onDelete={setPendingDelete}
+            />
           ))}
         </div>
       ) : (
-        <SessionList sessions={sessions} />
+        <SessionList
+          sessions={sessions}
+          usedToday={usedToday}
+          onDelete={setPendingDelete}
+        />
       )}
+
+      <DeleteSessionDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setPendingDelete(null);
+            setDeleteError(null);
+          }
+        }}
+        label={pendingDelete?.role}
+        deleting={deleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
@@ -278,18 +331,31 @@ function ViewButton({
   );
 }
 
-function SessionList({ sessions }: { sessions: Session[] }) {
+function SessionList({
+  sessions,
+  usedToday,
+  onDelete,
+}: {
+  sessions: Session[];
+  usedToday: boolean;
+  onDelete: (session: Session) => void;
+}) {
   return (
     <div className="overflow-hidden rounded-xl border border-white/10 bg-card/60 backdrop-blur-xl">
       {sessions.map((s) => {
         const { icon: Icon, gradient } = roleStyle(s.role);
         const completed = s.status === "Completed";
         return (
-          <Link
+          <div
             key={s.id}
-            href={`/history/${s.id}`}
-            className="flex items-center gap-4 border-b border-white/5 px-4 py-3 transition-colors last:border-0 hover:bg-white/5"
+            className="relative flex items-center gap-4 border-b border-white/5 px-4 py-3 transition-colors last:border-0 hover:bg-white/5"
           >
+            {/* Row navigation under the actions menu (z-10 below). */}
+            <Link
+              href={`/history/${s.id}`}
+              aria-label={`View ${s.role} session`}
+              className="absolute inset-0 z-[1]"
+            />
             <span
               className={`flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-white`}
             >
@@ -308,7 +374,14 @@ function SessionList({ sessions }: { sessions: Session[] }) {
               {completed ? `${s.score}%` : "—"}
             </span>
             <SessionStatusBadge status={s.status} />
-          </Link>
+            <div className="relative z-10">
+              <SessionActionsMenu
+                session={s}
+                usedToday={usedToday}
+                onDelete={onDelete}
+              />
+            </div>
+          </div>
         );
       })}
     </div>

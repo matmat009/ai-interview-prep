@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Briefcase,
   MessageSquare,
   Mic,
+  RotateCcw,
   Sparkles,
   Target,
   TrendingUp,
@@ -15,28 +17,12 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  fetchInProgressSession,
+  hasUsedTodaysAction,
+} from "@/features/history/sessions";
 import type { OnboardingAnswers, SessionFocusOverride } from "@/types/interview";
 import { AdjustFocusModal } from "@/features/interview/components/AdjustFocusModal";
-
-// One new interview session per user per day.
-const DAILY_SESSION_LIMIT = 1;
-
-// Sessions the user created in the current UTC day — the daily-limit measure.
-// Uses the UTC-day boundary so the client agrees with the DB trigger, which
-// counts by UTC calendar day.
-async function countSessionsToday(
-  supabase: ReturnType<typeof getSupabaseBrowserClient>,
-  userId: string,
-): Promise<number> {
-  const startOfToday = new Date();
-  startOfToday.setUTCHours(0, 0, 0, 0);
-  const { data } = await supabase
-    .from("sessions")
-    .select("id")
-    .eq("user_id", userId)
-    .gte("created_at", startOfToday.toISOString());
-  return (data ?? []).length;
-}
 
 export function InterviewStartScreen() {
   const router = useRouter();
@@ -44,9 +30,12 @@ export function InterviewStartScreen() {
   const [startError, setStartError] = useState<string | null>(null);
   const [profile, setProfile] = useState<OnboardingAnswers | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sessionsToday, setSessionsToday] = useState(0);
+  // One action per day (start OR continue); and the most recent unfinished
+  // session to resume, if any.
+  const [usedToday, setUsedToday] = useState(false);
+  const [continueId, setContinueId] = useState<string | null>(null);
 
-  const blocked = sessionsToday >= DAILY_SESSION_LIMIT;
+  const blocked = usedToday;
 
   // Per-session focus override; empty until the user adjusts it.
   const [focusOpen, setFocusOpen] = useState(false);
@@ -75,12 +64,16 @@ export function InterviewStartScreen() {
         router.replace("/onboarding");
         return;
       }
-      // Daily rate limit — count sessions created in the current UTC day. The
-      // limit is only checked here and again in handleStart (never mid-session),
-      // so an in-progress session can always be finished, even past midnight.
-      const count = await countSessionsToday(supabase, user.id);
+      // Daily allowance + resume target. The allowance is only checked here and
+      // again in handleStart (never mid-session), so an in-progress session can
+      // always be finished, even past midnight.
+      const [used, inProgress] = await Promise.all([
+        hasUsedTodaysAction(supabase, user.id),
+        fetchInProgressSession(supabase, user.id),
+      ]);
       if (!active) return;
-      setSessionsToday(count);
+      setUsedToday(used);
+      setContinueId(inProgress?.id ?? null);
 
       setProfile({
         role: data.role ?? "",
@@ -126,11 +119,11 @@ export function InterviewStartScreen() {
     }
 
     // Re-check right before creating the row — closes the race where a tab left
-    // open (which passed the mount-time check) could exceed the limit if another
-    // session was completed elsewhere in the meantime.
-    const usedToday = await countSessionsToday(supabase, user.id);
-    if (usedToday >= DAILY_SESSION_LIMIT) {
-      setSessionsToday(usedToday); // flips `blocked` -> shows the same message
+    // open (which passed the mount-time check) used its action elsewhere in the
+    // meantime (started or continued a session in another tab).
+    const alreadyUsed = await hasUsedTodaysAction(supabase, user.id);
+    if (alreadyUsed) {
+      setUsedToday(true); // flips `blocked` -> shows the "come back tomorrow" block
       setStarting(false);
       return;
     }
@@ -250,7 +243,19 @@ export function InterviewStartScreen() {
             </p>
           </div>
         ) : (
-          <div className="mt-9 flex flex-col items-center gap-4">
+          <div className="mt-9 flex w-full flex-col items-center gap-4">
+            {continueId && (
+              <Button
+                size="lg"
+                variant="outline"
+                nativeButton={false}
+                render={<Link href={`/interview/${continueId}`} />}
+                className="group w-full px-8 sm:w-auto"
+              >
+                <RotateCcw />
+                Continue where you left off
+              </Button>
+            )}
             <Button
               size="lg"
               onClick={handleStart}
@@ -260,6 +265,11 @@ export function InterviewStartScreen() {
               {starting ? "Starting…" : "Start Interview"}
               <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
             </Button>
+            {continueId && (
+              <p className="max-w-xs text-xs text-muted-foreground text-balance">
+                Continuing or starting uses today&apos;s session — pick one.
+              </p>
+            )}
             <button
               type="button"
               onClick={() => setFocusOpen(true)}

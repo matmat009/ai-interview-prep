@@ -8,12 +8,22 @@ import {
   Code2,
   Database,
   Layers,
+  MoreVertical,
+  RotateCcw,
   Server,
   Settings,
   Smartphone,
+  Trash2,
   Users,
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Session, SessionStatus } from "@/features/history/sessions";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -65,15 +75,81 @@ export function SessionStatusBadge({ status }: { status: SessionStatus }) {
   );
 }
 
-export function SessionCard({ session }: { session: Session }) {
+// Three-dot actions for a session: Continue (in-progress only, gated by the
+// daily action) and Delete. Reused by the grid card and the list row. Stops
+// click/pointer propagation so it never triggers the card's overlay link.
+export function SessionActionsMenu({
+  session,
+  usedToday,
+  onDelete,
+  className,
+}: {
+  session: Session;
+  usedToday: boolean;
+  onDelete: (session: Session) => void;
+  className?: string;
+}) {
+  const inProgress = session.status === "In Progress";
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            aria-label="Session actions"
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "flex size-8 items-center justify-center rounded-md border border-white/10 bg-background/70 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-background hover:text-foreground",
+              className,
+            )}
+          />
+        }
+      >
+        <MoreVertical className="size-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {inProgress &&
+          (usedToday ? (
+            <DropdownMenuItem disabled>
+              <RotateCcw />
+              Continue (used today)
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem render={<Link href={`/interview/${session.id}`} />}>
+              <RotateCcw />
+              Continue session
+            </DropdownMenuItem>
+          ))}
+        <DropdownMenuItem variant="destructive" onClick={() => onDelete(session)}>
+          <Trash2 />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function SessionCard({
+  session,
+  usedToday,
+  onDelete,
+}: {
+  session: Session;
+  usedToday: boolean;
+  onDelete: (session: Session) => void;
+}) {
   const { icon: Icon, gradient } = roleStyle(session.role);
   const completed = session.status === "Completed";
 
   return (
-    <Link
-      href={`/history/${session.id}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-white/10 bg-card/60 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-white/20 hover:shadow-xl"
-    >
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-white/10 bg-card/60 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-white/20 hover:shadow-xl">
+      {/* Whole-card navigation lives under the action controls (z-10 below). */}
+      <Link
+        href={`/history/${session.id}`}
+        aria-label={`View ${session.role} session`}
+        className="absolute inset-0 z-[1]"
+      />
+
       {/* Accent preview */}
       <div
         className={`relative aspect-video overflow-hidden bg-gradient-to-br ${gradient}`}
@@ -85,11 +161,20 @@ export function SessionCard({ session }: { session: Session }) {
         <div className="absolute top-3 left-3">
           <SessionStatusBadge status={session.status} />
         </div>
+      </div>
+
+      {/* Actions (+ score) — above the overlay link. */}
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
         {completed && (
-          <div className="absolute top-3 right-3 inline-flex items-center rounded-full border border-white/10 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground backdrop-blur-sm tabular-nums">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground backdrop-blur-sm tabular-nums">
             {session.score}%
           </div>
         )}
+        <SessionActionsMenu
+          session={session}
+          usedToday={usedToday}
+          onDelete={onDelete}
+        />
       </div>
 
       {/* Meta */}
@@ -107,6 +192,6 @@ export function SessionCard({ session }: { session: Session }) {
           </p>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

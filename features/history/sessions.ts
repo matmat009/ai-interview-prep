@@ -28,6 +28,7 @@ export type SessionRow = {
   status: "in-progress" | "completed";
   overall_score: number | null;
   created_at: string;
+  updated_at: string;
   completed_at: string | null;
 };
 
@@ -95,4 +96,56 @@ export async function fetchSession(
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as SessionRow) ?? null;
+}
+
+// Start of the current UTC calendar day, as ISO — matches the DB daily-limit
+// trigger, which counts by UTC day.
+function startOfUtcTodayIso(): string {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+// One action per day = starting a NEW session or CONTINUING an existing one.
+// True if any of the user's sessions was created or last updated today (UTC).
+export async function hasUsedTodaysAction(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  const since = startOfUtcTodayIso();
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("id")
+    .eq("user_id", userId)
+    .or(`created_at.gte.${since},updated_at.gte.${since}`)
+    .limit(1);
+  if (error) throw new Error(error.message);
+  return (data ?? []).length > 0;
+}
+
+// The user's most recent unfinished session (any date), or null. This is what
+// "Continue where you left off" resumes.
+export async function fetchInProgressSession(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<SessionRow | null> {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "in-progress")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as SessionRow) ?? null;
+}
+
+// RLS's sessions_delete_own policy restricts this to the caller's own rows.
+export async function deleteSession(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<void> {
+  const { error } = await supabase.from("sessions").delete().eq("id", id);
+  if (error) throw new Error(error.message);
 }

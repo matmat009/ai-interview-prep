@@ -3,31 +3,50 @@
 import { useEffect, useState } from "react";
 
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, Trophy } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ChevronDown, RotateCcw, Trash2, Trophy } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
+  deleteSession,
   fetchSession,
+  hasUsedTodaysAction,
   toDisplaySession,
   type SessionItem,
   type SessionRow,
 } from "@/features/history/sessions";
 import { formatSessionDate } from "@/features/history/components/SessionCard";
+import { DeleteSessionDialog } from "@/features/history/components/DeleteSessionDialog";
 
 export function SessionReviewView({ sessionId }: { sessionId: string }) {
+  const router = useRouter();
   const [row, setRow] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<number | null>(0);
+  const [usedToday, setUsedToday] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
         const supabase = getSupabaseBrowserClient();
-        const found = await fetchSession(supabase, sessionId);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        const [found, used] = await Promise.all([
+          fetchSession(supabase, sessionId),
+          user
+            ? hasUsedTodaysAction(supabase, user.id)
+            : Promise.resolve(false),
+        ]);
         if (!active) return;
         setRow(found);
+        setUsedToday(used);
         setLoading(false);
       } catch (e) {
         if (!active) return;
@@ -39,6 +58,19 @@ export function SessionReviewView({ sessionId }: { sessionId: string }) {
       active = false;
     };
   }, [sessionId]);
+
+  async function confirmDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      await deleteSession(supabase, sessionId);
+      router.push("/history");
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : String(e));
+      setDeleting(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -66,6 +98,7 @@ export function SessionReviewView({ sessionId }: { sessionId: string }) {
   }
 
   const display = toDisplaySession(row);
+  const inProgress = row.status === "in-progress";
   const items: SessionItem[] = (row.items ?? [])
     .slice()
     .sort((a, b) => a.order - b.order);
@@ -181,7 +214,43 @@ export function SessionReviewView({ sessionId }: { sessionId: string }) {
             </ul>
           </div>
         )}
+
+        {/* Actions — below the recap. */}
+        <div className="flex items-center justify-end gap-2">
+          {inProgress &&
+            (usedToday ? (
+              <span className="text-xs text-muted-foreground">
+                Continue available tomorrow
+              </span>
+            ) : (
+              <Button
+                nativeButton={false}
+                render={<Link href={`/interview/${sessionId}`} />}
+              >
+                <RotateCcw />
+                Continue session
+              </Button>
+            ))}
+          <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
+            <Trash2 />
+            Delete
+          </Button>
+        </div>
       </div>
+
+      <DeleteSessionDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          if (!deleting) {
+            setConfirmOpen(open);
+            if (!open) setDeleteError(null);
+          }
+        }}
+        label={display.role}
+        deleting={deleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
