@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { LogoMark } from "@/components/brand/logo-mark";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -28,7 +29,7 @@ export function Navbar() {
     >
       <div className="flex items-center gap-8">
         <a href="#" className="flex items-center gap-2">
-          <Sparkles className="size-5 text-white" strokeWidth={2.25} />
+          <LogoMark className="size-5" />
           <span className="text-[15px] font-semibold tracking-tight text-white">
             PrepPilot
           </span>

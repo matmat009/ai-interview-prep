@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+
+import { LogoMark } from "@/components/brand/logo-mark";
 
 export default function AuthLayout({
   children,
@@ -22,7 +23,7 @@ export default function AuthLayout({
         href="/"
         className="relative z-10 mb-8 flex items-center gap-2 transition-opacity hover:opacity-80"
       >
-        <Sparkles className="size-5 text-white" strokeWidth={2.25} />
+        <LogoMark className="size-5" />
         <span className="text-[15px] font-semibold tracking-tight text-white">
           PrepPilot
         </span>
