@@ -14,8 +14,14 @@ const PROTECTED_PREFIXES = [
 // Auth pages a logged-in user shouldn't see.
 const AUTH_PAGES = ["/login", "/signup"];
 
+// Auth-adjacent routes that are public AND must NOT redirect a logged-in user
+// away (unlike AUTH_PAGES) — password reset needs to work while a recovery
+// session is active.
+const PUBLIC_ROUTES = ["/forgot-password", "/reset-password"];
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  if (PUBLIC_ROUTES.includes(path)) return NextResponse.next();
   const isProtected = PROTECTED_PREFIXES.some(
     (p) => path === p || path.startsWith(`${p}/`),
   );

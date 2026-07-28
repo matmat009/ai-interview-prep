@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,8 +17,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { destinationForUser } from "@/features/auth/post-auth-redirect";
+import { GoogleSignInButton } from "@/features/auth/GoogleSignInButton";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const OAUTH_ERROR =
+  "Something went wrong signing in with Google. Please try again.";
 
 type Errors = {
   email?: string;
@@ -32,6 +37,21 @@ export function LoginForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    const reset = params.get("reset");
+    // OAuth callback failures redirect here with ?error=oauth; a completed
+    // password reset redirects here with ?reset=success.
+    if (error === "oauth") setFormError(OAUTH_ERROR);
+    if (reset === "success") setNotice("Password updated, please sign in.");
+    if (error || reset) {
+      // Drop the param so a refresh doesn't keep re-showing the banner.
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
 
   function validate(): Errors {
     const next: Errors = {};
@@ -62,18 +82,13 @@ export function LoginForm() {
       return;
     }
 
-    // Route by onboarding status from the user's profile row.
-    let completed = false;
+    // Route by onboarding status — shared with the OAuth callback so the rule
+    // lives in one place.
     const userId = data.user?.id;
-    if (userId) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", userId)
-        .maybeSingle();
-      completed = profile?.onboarding_completed === true;
-    }
-    router.push(completed ? "/interview" : "/onboarding");
+    const dest = userId
+      ? await destinationForUser(supabase, userId)
+      : "/onboarding";
+    router.push(dest);
   }
 
   return (
@@ -88,6 +103,11 @@ export function LoginForm() {
       </CardHeader>
 
       <CardContent>
+        {notice && (
+          <p className="mb-4 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
+            {notice}
+          </p>
+        )}
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="email" className="text-white/70">
@@ -114,9 +134,17 @@ export function LoginForm() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password" className="text-white/70">
-              Password
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-white/70">
+                Password
+              </Label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-violet-400 transition-colors hover:text-violet-300"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <Input
               id="password"
               name="password"
@@ -151,6 +179,8 @@ export function LoginForm() {
             {submitting ? "Logging in…" : "Log in"}
           </Button>
         </form>
+
+        <GoogleSignInButton />
       </CardContent>
 
       <CardFooter className="justify-center">
