@@ -26,6 +26,9 @@ export function InterviewProfileSection() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Role the profile loaded with — used to clear cached Question Bank
+  // categories when the role changes so they regenerate for the new role.
+  const initialRoleRef = useRef("");
 
   useEffect(() => {
     let active = true;
@@ -57,6 +60,7 @@ export function InterviewProfileSection() {
             companies: data.companies ?? "",
             concerns: data.concerns ?? "",
           });
+          initialRoleRef.current = data.role ?? "";
         }
         setLoading(false);
       } catch (e) {
@@ -91,6 +95,8 @@ export function InterviewProfileSection() {
       return;
     }
 
+    const roleChanged = answers.role.trim() !== initialRoleRef.current.trim();
+
     const { error: saveError } = await supabase.from("profiles").upsert({
       id: user.id,
       role: answers.role,
@@ -101,6 +107,9 @@ export function InterviewProfileSection() {
       concerns: answers.concerns,
       // onboarding_completed is intentionally omitted — editing settings must
       // never reset or change whether onboarding was completed.
+      // Role change → drop cached Question Bank categories so they regenerate
+      // for the new role on the next Question Bank visit.
+      ...(roleChanged ? { question_bank_categories: null } : {}),
     });
 
     setSaving(false);
@@ -109,6 +118,8 @@ export function InterviewProfileSection() {
       return;
     }
 
+    // Saved role is now the baseline for detecting the next change.
+    initialRoleRef.current = answers.role;
     setSaved(true);
     if (savedTimer.current) clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), 3000);

@@ -57,7 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               className="data-[slot=sidebar-menu-button]:p-1.5!"
-              render={<Link href="/" />}
+              render={<Link href="/interview" />}
             >
               <LogoMark className="size-5" />
               <span className="text-base font-semibold">PrepPilot</span>

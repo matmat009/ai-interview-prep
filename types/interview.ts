@@ -22,6 +22,12 @@ export type QuestionCategory =
   | "general"
   | "wildcard";
 
+// A Question Bank practice category (AI-generated per the user's role).
+export type QuestionBankCategory = {
+  title: string;
+  description: string;
+};
+
 export interface InterviewQuestion {
   id: string;
   text: string;

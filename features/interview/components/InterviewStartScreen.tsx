@@ -244,31 +244,36 @@ export function InterviewStartScreen() {
           </div>
         ) : (
           <div className="mt-9 flex w-full flex-col items-center gap-4">
-            {continueId && (
+            {continueId ? (
+              <>
+                <Button
+                  size="lg"
+                  nativeButton={false}
+                  render={<Link href={`/interview/${continueId}`} />}
+                  className="group w-full px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40 sm:w-auto"
+                >
+                  <RotateCcw />
+                  Continue where you left off
+                </Button>
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  disabled={starting}
+                  className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-60"
+                >
+                  {starting ? "Starting…" : "Start a new session instead"}
+                </button>
+              </>
+            ) : (
               <Button
                 size="lg"
-                variant="outline"
-                nativeButton={false}
-                render={<Link href={`/interview/${continueId}`} />}
-                className="group w-full px-8 sm:w-auto"
+                onClick={handleStart}
+                disabled={starting}
+                className="group w-full px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40 sm:w-auto"
               >
-                <RotateCcw />
-                Continue where you left off
+                {starting ? "Starting…" : "Start Interview"}
+                <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
               </Button>
-            )}
-            <Button
-              size="lg"
-              onClick={handleStart}
-              disabled={starting}
-              className="group w-full px-8 shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40 sm:w-auto"
-            >
-              {starting ? "Starting…" : "Start Interview"}
-              <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
-            </Button>
-            {continueId && (
-              <p className="max-w-xs text-xs text-muted-foreground text-balance">
-                Continuing or starting uses today&apos;s session — pick one.
-              </p>
             )}
             <button
               type="button"

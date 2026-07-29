@@ -18,11 +18,15 @@ export function FeedbackPanel({
   answer,
   isLast,
   onNext,
+  actions,
 }: {
   feedback: Feedback;
   answer: string;
-  isLast: boolean;
-  onNext: () => void;
+  isLast?: boolean;
+  onNext?: () => void;
+  // Optional custom footer actions. When provided, they replace the default
+  // "Next Question"/"Finish Session" button (used by the Question Bank flow).
+  actions?: React.ReactNode;
 }) {
   return (
     <div className="w-full rounded-2xl border border-white/10 bg-card/60 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
@@ -73,14 +77,16 @@ export function FeedbackPanel({
         )}
       </div>
 
-      <div className="mt-7 flex justify-end">
-        <Button
-          onClick={onNext}
-          className="shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30"
-        >
-          {isLast ? "Finish Session" : "Next Question"}
-          {isLast ? <Flag /> : <ArrowRight />}
-        </Button>
+      <div className="mt-7 flex flex-wrap items-center justify-end gap-3">
+        {actions ?? (
+          <Button
+            onClick={onNext}
+            className="shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30"
+          >
+            {isLast ? "Finish Session" : "Next Question"}
+            {isLast ? <Flag /> : <ArrowRight />}
+          </Button>
+        )}
       </div>
     </div>
   );

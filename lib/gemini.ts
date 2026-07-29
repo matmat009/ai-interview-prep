@@ -3,6 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type {
   Feedback,
   OnboardingAnswers,
+  QuestionBankCategory,
   QuestionCategory,
   SessionFocusOverride,
 } from "@/types/interview";
@@ -364,4 +365,94 @@ CRITICAL: If the answer is empty, extremely short, off-topic, or gibberish (e.g.
   }
 
   return parseFeedback(parsed);
+}
+
+// Structured-output schema so Gemini returns categories in a known shape.
+const CATEGORIES_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    categories: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          description: { type: Type.STRING },
+        },
+        required: ["title", "description"],
+      },
+    },
+  },
+  required: ["categories"],
+};
+
+function parseCategories(value: unknown): QuestionBankCategory[] {
+  if (!value || typeof value !== "object") {
+    throw new Error("Categories response was not a JSON object.");
+  }
+  const arr = (value as Record<string, unknown>).categories;
+  if (!Array.isArray(arr)) {
+    throw new Error("Categories 'categories' must be an array.");
+  }
+  const out: QuestionBankCategory[] = [];
+  for (const item of arr) {
+    if (!item || typeof item !== "object") continue;
+    const t = (item as Record<string, unknown>).title;
+    const d = (item as Record<string, unknown>).description;
+    if (typeof t === "string" && t.trim()) {
+      out.push({
+        title: t.trim(),
+        description: typeof d === "string" ? d.trim() : "",
+      });
+    }
+  }
+  if (out.length === 0) throw new Error("Gemini returned no valid categories.");
+  return out.slice(0, 5); // 4-5 expected; cap defensively
+}
+
+/**
+ * Generates 4-5 interview-practice categories tailored to a specific role,
+ * as { title, description }. Used by the Question Bank only — onboarding's
+ * InterviewTypeStep and AdjustFocusModal keep the fixed generic set.
+ */
+export async function generateCategories(
+  role: string,
+): Promise<QuestionBankCategory[]> {
+  const cleanRole = role?.trim() || "this role";
+  const prompt = `You are designing an interview-practice question bank for someone preparing for "${cleanRole}" interviews.
+
+Propose 4-5 practice CATEGORIES genuinely relevant to real interviews for this specific role. Each should reflect a distinct competency an interviewer for this role would actually probe — not generic filler.
+
+For each category:
+- title: a short label (2-4 words), e.g. "System Design", "Stakeholder Management".
+- description: one concise sentence on what it covers.
+
+Order them from most to least central to the role. Tailor them to "${cleanRole}" specifically — a Backend Engineer and a Marketing Manager must get clearly different sets.`;
+
+  let response;
+  try {
+    response = await generateWithRetry({
+      model: MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: CATEGORIES_SCHEMA,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Gemini request failed: ${message}`);
+  }
+
+  const raw = response.text;
+  if (!raw) throw new Error("Gemini returned an empty categories response.");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(
+      `Gemini returned unparseable JSON categories: ${raw.slice(0, 200)}`,
+    );
+  }
+  return parseCategories(parsed);
 }
