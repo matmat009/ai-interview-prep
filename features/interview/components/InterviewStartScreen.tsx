@@ -198,8 +198,7 @@ export function InterviewStartScreen() {
           Ready to practice your interview?
         </h1>
         <p className="mt-3 max-w-md text-muted-foreground text-balance">
-          We&apos;ll tailor each question to your focus area. Take your time —
-          you can pause whenever you need.
+          We&apos;ll tailor each question to your focus area. Take your time, you can pause whenever you need.
         </p>
 
         {/* Summary card — glass treatment for contrast over the gradient */}

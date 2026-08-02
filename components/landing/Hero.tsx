@@ -7,7 +7,6 @@ import { motion, useReducedMotion, type Variants } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { InterviewPreview } from "@/components/landing/InterviewPreview";
-import { PRESS } from "@/components/landing/interaction";
 
 export function Hero() {
   // Disable/soften all motion when the user prefers reduced motion.
@@ -39,24 +38,16 @@ export function Hero() {
       id="home"
       className="relative z-10 mx-auto grid w-full max-w-6xl scroll-mt-24 grid-cols-1 items-center gap-14 px-6 pt-32 pb-24 sm:pt-40 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16"
     >
-      {/* Left: copy — staggered entrance (eyebrow → headline → sub → CTAs → trust). */}
+      {/* Left: copy — staggered entrance (headline → sub → CTA → trust). */}
       <motion.div
         variants={container}
         initial="hidden"
         animate="show"
         className="flex flex-col items-start text-left"
       >
-        {/* Flat eyebrow pill — no glow dot, no terminal punctuation. */}
-        <motion.span
-          variants={item}
-          className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white/60"
-        >
-          AI mock interviews, real feedback
-        </motion.span>
-
         <motion.h1
           variants={item}
-          className="mt-6 max-w-2xl font-[family-name:var(--font-space-grotesk)] text-4xl leading-[1.05] font-semibold tracking-[-0.03em] text-white text-balance sm:text-5xl lg:text-[3.5rem]"
+          className="max-w-2xl font-[family-name:var(--font-space-grotesk)] text-4xl leading-[1.05] font-semibold tracking-[-0.03em] text-white text-balance sm:text-5xl lg:text-[3.5rem]"
         >
           Walk in already having done the interview.
         </motion.h1>
@@ -83,13 +74,6 @@ export function Hero() {
             Start practicing
             <ArrowRight className="size-4" />
           </Button>
-
-          <a
-            href="#sample-question"
-            className={`${PRESS} inline-flex h-11 items-center border border-white/12 px-5 text-sm font-medium text-white/80 hover:bg-white/[0.04] hover:text-white`}
-          >
-            See a sample question
-          </a>
         </motion.div>
 
         <motion.p variants={item} className="mt-6 text-xs text-white/40">
@@ -108,6 +92,8 @@ export function Hero() {
         }}
         className="w-full"
       >
+        {/* Continuous gentle float — nested so it doesn't fight the one-time
+            entrance y above. Disabled under reduced motion. */}
         <motion.div
           animate={reduce ? undefined : { y: [0, -5, 0] }}
           transition={

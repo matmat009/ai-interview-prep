@@ -23,7 +23,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "PrepPilot — Ace every interview with AI on your side",
+  title: "PrepPilot",
   description:
     "AI interview prep kit that runs realistic mock interviews, scores your answers, and coaches you to your next offer.",
 };

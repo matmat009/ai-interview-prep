@@ -164,8 +164,7 @@ export default function QuestionBankPage() {
           Pick a category to practice
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Quick, on-demand practice — tailored to your role, one question at a
-          time.
+          Quick, on-demand practice, tailored to your role, one question at a time.
           {remaining > 0 &&
             ` ${remaining} of ${QUESTION_BANK_DAILY_LIMIT} left today.`}
         </p>

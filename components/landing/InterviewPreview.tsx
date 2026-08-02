@@ -1,17 +1,32 @@
+"use client";
+
 import { Mic, SendHorizontal } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 
 import { PRESS } from "@/components/landing/interaction";
 
 // Static, screenshot-like mirror of the real interview session UI
 // (QuestionCard + AnswerInput), restyled: crisp 1px border + tight shadow,
 // no blur/glow, one accent (progress fill + submit) only, mono for data labels.
-// It sits still — no looping animation; the only motion is press feedback.
+// It sits still — the only motion is a one-time progress fill on load and a
+// blinking caret that suggests the field is ready for input.
 export function InterviewPreview() {
+  // Same reduced-motion pattern as the rest of the landing page.
+  const reduce = useReducedMotion();
+
   return (
     <div
       id="sample-question"
       className="w-full rounded-2xl border border-white/12 bg-[#0d0d0f] shadow-[0_10px_34px_-14px_rgba(0,0,0,0.75)]"
     >
+      {/* Keyframe for the answer caret (scoped to this card). */}
+      <style>{`
+        @keyframes hero-caret-blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+      `}</style>
+
       {/* Question + progress */}
       <div className="p-6 sm:p-7">
         <div className="flex items-center justify-between font-mono text-[11px] tracking-wider text-white/40 uppercase">
@@ -19,9 +34,13 @@ export function InterviewPreview() {
           <span className="tabular-nums">29%</span>
         </div>
         <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
-          <div
+          {/* One-time fill from 0% to 29% on load (ease-out). Reduced motion
+              renders straight at 29% with no animation. Never loops. */}
+          <motion.div
             className="h-full rounded-full bg-primary"
-            style={{ width: "29%" }}
+            initial={{ width: reduce ? "29%" : "0%" }}
+            animate={{ width: "29%" }}
+            transition={{ duration: reduce ? 0 : 1, ease: [0.16, 1, 0.3, 1] }}
           />
         </div>
         <h2 className="mt-6 text-lg leading-snug font-semibold tracking-tight text-white text-balance sm:text-xl">
@@ -36,7 +55,17 @@ export function InterviewPreview() {
       {/* Answer */}
       <div className="p-6 sm:p-7">
         <span className="text-sm font-medium text-white/80">Your answer</span>
-        <div className="mt-3 min-h-28 rounded-xl border border-white/12 bg-black/20 p-4">
+        <div className="relative mt-3 min-h-28 rounded-xl border border-white/12 bg-black/20 p-4">
+          {/* Blinking caret — suggests the field is ready. Does not type; the
+              placeholder is untouched. Static (no blink) under reduced motion. */}
+          <span
+            aria-hidden
+            className={
+              reduce
+                ? "pointer-events-none absolute top-[17px] left-4 h-4 w-px bg-white/40"
+                : "pointer-events-none absolute top-[17px] left-4 h-4 w-px bg-white/60 [animation:hero-caret-blink_1.1s_infinite]"
+            }
+          />
           <p className="text-sm leading-relaxed text-white/35">
             Set the scene, then walk through the call you made and why: the
             constraints, the options, and the tradeoff you landed on.
