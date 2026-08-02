@@ -35,7 +35,10 @@ export function Hero() {
   };
 
   return (
-    <section className="relative z-10 mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-14 px-6 pt-32 pb-24 sm:pt-40 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+    <section
+      id="home"
+      className="relative z-10 mx-auto grid w-full max-w-6xl scroll-mt-24 grid-cols-1 items-center gap-14 px-6 pt-32 pb-24 sm:pt-40 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16"
+    >
       {/* Left: copy — staggered entrance (eyebrow → headline → sub → CTAs → trust). */}
       <motion.div
         variants={container}
@@ -62,7 +65,7 @@ export function Hero() {
           variants={item}
           className="mt-5 max-w-lg text-base leading-relaxed text-white/55 text-pretty"
         >
-          A full 7-question mock interview, tailored to your role — with
+          A full 7-question mock interview, tailored to your role, with
           instant, scored feedback on every answer. Rehearse the real thing
           before it counts.
         </motion.p>

@@ -4,11 +4,18 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { ChevronDown } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/brand/logo-mark";
+
+// Plain in-page links; each smooth-scrolls to its matching section id.
+const NAV_LINKS = [
+  { id: "home", label: "Home" },
+  { id: "how-it-works", label: "How it works" },
+  { id: "features", label: "Features" },
+  { id: "faq", label: "FAQ" },
+];
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -21,6 +28,16 @@ export function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Smooth-scroll to a section. scrollIntoView respects each section's
+  // scroll-mt-* (scroll-margin-top), so targets clear the fixed nav. Instant
+  // jump under reduced-motion.
+  function handleNav(event: React.MouseEvent, id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    event.preventDefault();
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
 
   return (
     <motion.header
@@ -37,7 +54,11 @@ export function Navbar() {
       }`}
     >
       <div className="flex items-center gap-8">
-        <a href="#" className="flex items-center gap-2">
+        <a
+          href="#home"
+          onClick={(e) => handleNav(e, "home")}
+          className="flex items-center gap-2"
+        >
           <LogoMark className="size-5" />
           <span className="text-[15px] font-semibold tracking-tight text-white">
             PrepPilot
@@ -45,9 +66,16 @@ export function Navbar() {
         </a>
       </div>
       <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 md:flex">
-        <NavItem hasChevron>Getting started</NavItem>
-        <NavItem hasChevron>Features</NavItem>
-        <NavItem>Documentation</NavItem>
+        {NAV_LINKS.map((link) => (
+          <a
+            key={link.id}
+            href={`#${link.id}`}
+            onClick={(e) => handleNav(e, link.id)}
+            className="text-sm text-white/70 transition-colors hover:text-white"
+          >
+            {link.label}
+          </a>
+        ))}
       </nav>
       <div className="flex items-center gap-4">
         <Link
@@ -66,23 +94,5 @@ export function Navbar() {
         </Button>
       </div>
     </motion.header>
-  );
-}
-
-function NavItem({
-  children,
-  hasChevron,
-}: {
-  children: React.ReactNode;
-  hasChevron?: boolean;
-}) {
-  return (
-    <a
-      href="#"
-      className="flex items-center gap-1 text-sm text-white/70 transition-colors hover:text-white"
-    >
-      {children}
-      {hasChevron && <ChevronDown className="size-4 text-white/40" />}
-    </a>
   );
 }

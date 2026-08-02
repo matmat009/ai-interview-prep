@@ -38,7 +38,7 @@ export function InterviewPreview() {
         <span className="text-sm font-medium text-white/80">Your answer</span>
         <div className="mt-3 min-h-28 rounded-xl border border-white/12 bg-black/20 p-4">
           <p className="text-sm leading-relaxed text-white/35">
-            Set the scene, then walk through the call you made and why — the
+            Set the scene, then walk through the call you made and why: the
             constraints, the options, and the tradeoff you landed on.
           </p>
         </div>
