@@ -30,14 +30,14 @@ export function HowItWorks() {
   const reduce = useReducedMotion();
   const container: Variants = {
     hidden: {},
-    show: { transition: { staggerChildren: reduce ? 0 : 0.07 } },
+    show: { transition: { staggerChildren: reduce ? 0 : 0.14 } },
   };
   const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 12 },
+    hidden: { opacity: 0, y: reduce ? 0 : 22 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: reduce ? 0.25 : 0.45, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: reduce ? 0.25 : 0.65, ease: [0.16, 1, 0.3, 1] },
     },
   };
 
@@ -50,7 +50,7 @@ export function HowItWorks() {
         variants={container}
         initial="hidden"
         whileInView="show"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: true, amount: 0.4, margin: "-10% 0px" }}
         className="mx-auto max-w-6xl"
       >
         {/* Header group animates first as a unit. */}
