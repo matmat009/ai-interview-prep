@@ -18,6 +18,7 @@ import {
 } from "@/features/history/sessions";
 import { formatSessionDate } from "@/features/history/components/SessionCard";
 import { DeleteSessionDialog } from "@/features/history/components/DeleteSessionDialog";
+import { toastDestructive } from "@/components/ui/sonner";
 
 export function SessionReviewView({ sessionId }: { sessionId: string }) {
   const router = useRouter();
@@ -65,6 +66,7 @@ export function SessionReviewView({ sessionId }: { sessionId: string }) {
     try {
       const supabase = getSupabaseBrowserClient();
       await deleteSession(supabase, sessionId);
+      toastDestructive("Session deleted", "Removed from your history.");
       router.push("/history");
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : String(e));

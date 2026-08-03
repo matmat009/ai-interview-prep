@@ -129,8 +129,10 @@ export function OnboardingWizard() {
       return;
     }
 
-    // Only navigate once the write succeeds.
-    router.push("/interview");
+    // Only navigate once the write succeeds. The ?welcome=true flag triggers a
+    // one-time welcome banner on the start screen (stripped there on read); it's
+    // only set here, so it never fires for returning users via login/OAuth.
+    router.push("/interview?welcome=true");
   }
 
   return (

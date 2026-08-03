@@ -1,7 +1,7 @@
 "use client"
 
-import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { Toaster as Sonner, toast, type ToasterProps } from "sonner"
+import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon, Trash2Icon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
@@ -9,8 +9,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="dark"
       className="toaster group"
       icons={{
+        // Success = emerald check, so success toasts read clearly distinct from
+        // the destructive (red) one.
         success: (
-          <CircleCheckIcon className="size-4" />
+          <CircleCheckIcon className="size-4 text-emerald-400" />
         ),
         info: (
           <InfoIcon className="size-4" />
@@ -35,12 +37,33 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          // Crisp 1px border + tight dark shadow (no colored glow); our type.
+          toast:
+            "cn-toast rounded-xl border-border shadow-lg shadow-black/25",
+          title: "text-sm font-medium",
+          description: "text-[13px] text-muted-foreground",
         },
       }}
       {...props}
     />
   )
+}
+
+// --- App toast helpers ------------------------------------------------------
+// Two visual variants only: success (emerald check) and a destructive-action
+// confirmation (red trash). Kept minimal and consistent with our dark theme.
+
+export function toastSuccess(title: string, description?: string) {
+  toast.success(title, { description })
+}
+
+// For a successful DESTRUCTIVE action (e.g. deletion) — not an error. Reads red
+// so it's visually distinct from the success toasts.
+export function toastDestructive(title: string, description?: string) {
+  toast(title, {
+    description,
+    icon: <Trash2Icon className="size-4 text-red-400" />,
+  })
 }
 
 export { Toaster }

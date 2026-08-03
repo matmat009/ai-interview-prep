@@ -7,6 +7,7 @@ import { RotateCcw, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { toastSuccess } from "@/components/ui/sonner";
 import {
   averageScore,
   fetchSession,
@@ -138,7 +139,11 @@ export function InterviewSession({
           updated_at: new Date().toISOString(),
         })
         .eq("id", sessionId);
-      if (error) console.error("Failed to complete session:", error.message);
+      if (error) {
+        console.error("Failed to complete session:", error.message);
+      } else {
+        toastSuccess("Session complete", "Your answers are scored and saved.");
+      }
     } catch (e) {
       console.error("Failed to complete session:", e);
     }

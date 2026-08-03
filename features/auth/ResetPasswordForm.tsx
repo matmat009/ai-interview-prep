@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { toastSuccess } from "@/components/ui/sonner";
 
 type Errors = { password?: string; confirmPassword?: string };
 type Status = "verifying" | "ready" | "invalid";
@@ -93,6 +94,7 @@ export function ResetPasswordForm() {
       setSubmitting(false);
       return;
     }
+    toastSuccess("Password updated", "Sign in with your new password.");
     // Sign the recovery session out so the user logs in fresh with the new
     // password (and middleware doesn't redirect them off /login).
     await supabase.auth.signOut();

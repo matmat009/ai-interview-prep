@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { toastSuccess } from "@/components/ui/sonner";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,6 +40,10 @@ export function ForgotPasswordForm() {
     });
     setSubmitting(false);
     setSent(true);
+    toastSuccess(
+      "Reset link sent",
+      "Check your email for a link to reset your password.",
+    );
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/sonner";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   fetchInProgressSession,
@@ -30,6 +31,9 @@ export function InterviewStartScreen() {
   const [startError, setStartError] = useState<string | null>(null);
   const [profile, setProfile] = useState<OnboardingAnswers | null>(null);
   const [loading, setLoading] = useState(true);
+  // One-time post-onboarding welcome: captured on mount from ?welcome=true,
+  // fired as a toast once the profile (role) has loaded.
+  const welcomeRef = useRef(false);
   // One action per day (start OR continue); and the most recent unfinished
   // session to resume, if any.
   const [usedToday, setUsedToday] = useState(false);
@@ -83,6 +87,16 @@ export function InterviewStartScreen() {
         companies: data.companies ?? "",
         concerns: data.concerns ?? "",
       });
+      // Fire the one-time welcome toast now that the role is known. The mount
+      // effect already detected and stripped the ?welcome=true param.
+      if (welcomeRef.current) {
+        welcomeRef.current = false;
+        const role = data.role?.trim();
+        toastSuccess(
+          role ? `You're all set, ${role}` : "You're all set",
+          "Ready for your first session?",
+        );
+      }
       // Single gate for profile + limit, so the Start button never flashes
       // before we know whether they're allowed to start.
       setLoading(false);
@@ -91,6 +105,17 @@ export function InterviewStartScreen() {
       active = false;
     };
   }, [router]);
+
+  // One-time welcome: only when redirected here from onboarding with
+  // ?welcome=true. Strip the param immediately so it never reappears on refresh,
+  // back/forward, or return visits (login/OAuth land here without the param).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("welcome") === "true") {
+      welcomeRef.current = true;
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
 
   // Effective focus: the session override wins, else the profile's type.
   const interviewType =

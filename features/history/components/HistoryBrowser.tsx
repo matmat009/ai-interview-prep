@@ -33,6 +33,7 @@ import {
   roleStyle,
 } from "@/features/history/components/SessionCard";
 import { DeleteSessionDialog } from "@/features/history/components/DeleteSessionDialog";
+import { toastDestructive } from "@/components/ui/sonner";
 
 type SortKey = "recent" | "oldest" | "score";
 type StatusFilter = "all" | SessionStatus;
@@ -111,6 +112,7 @@ export function HistoryBrowser() {
       await deleteSession(supabase, pendingDelete.id);
       setAllSessions((prev) => prev.filter((s) => s.id !== pendingDelete.id));
       setPendingDelete(null);
+      toastDestructive("Session deleted", "Removed from your history.");
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : String(e));
     } finally {

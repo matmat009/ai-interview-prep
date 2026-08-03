@@ -6,6 +6,7 @@ import { Briefcase, Check, NotebookPen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { toastSuccess } from "@/components/ui/sonner";
 import {
   EMPTY_ONBOARDING_ANSWERS,
   type OnboardingAnswers,
@@ -121,6 +122,7 @@ export function InterviewProfileSection() {
     // Saved role is now the baseline for detecting the next change.
     initialRoleRef.current = answers.role;
     setSaved(true);
+    toastSuccess("Settings saved", "Your interview profile is up to date.");
     if (savedTimer.current) clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), 3000);
   }
