@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toastSuccess } from "@/components/ui/sonner";
@@ -160,10 +160,9 @@ export function ResetPasswordForm() {
             <Label htmlFor="password" className="text-white/70">
               New password
             </Label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={password}
@@ -183,10 +182,9 @@ export function ResetPasswordForm() {
             <Label htmlFor="confirmPassword" className="text-white/70">
               Confirm new password
             </Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={confirmPassword}

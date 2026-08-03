@@ -3,8 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Browser-side Supabase client — uses the public URL + anon key, which are safe
 // to expose to the browser (NEXT_PUBLIC_* are inlined into the client bundle).
-// Use this from client components. For elevated/server access, use
-// lib/supabase/server.ts instead (never import that into client code).
+// Use this from client components.
 
 let browserClient: SupabaseClient | undefined;
 

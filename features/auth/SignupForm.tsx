@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { GoogleSignInButton } from "@/features/auth/GoogleSignInButton";
@@ -143,10 +144,9 @@ export function SignupForm() {
             <Label htmlFor="password" className="text-white/70">
               Password
             </Label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={password}
@@ -167,10 +167,9 @@ export function SignupForm() {
             <Label htmlFor="confirmPassword" className="text-white/70">
               Confirm password
             </Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={confirmPassword}
