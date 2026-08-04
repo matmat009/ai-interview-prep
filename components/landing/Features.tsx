@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 
+import { useRevealAmount } from "@/components/landing/use-reveal-amount";
+
 type Feature = {
   icon: ComponentType<{ className?: string }>;
   title: string;
@@ -72,6 +74,7 @@ const FEATURES: Feature[] = [
 export function Features() {
   // Same reduced-motion + variants pattern as the hero entrance.
   const reduce = useReducedMotion();
+  const revealAmount = useRevealAmount();
   const container: Variants = {
     hidden: {},
     show: { transition: { staggerChildren: reduce ? 0 : 0.14 } },
@@ -94,7 +97,7 @@ export function Features() {
         variants={container}
         initial="hidden"
         whileInView="show"
-        viewport={{ once: true, amount: 0.4, margin: "-10% 0px" }}
+        viewport={{ once: true, amount: revealAmount, margin: "-10% 0px" }}
         className="mx-auto max-w-6xl"
       >
         {/* Header group animates first as a unit. */}

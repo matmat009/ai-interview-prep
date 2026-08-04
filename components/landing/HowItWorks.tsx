@@ -2,6 +2,8 @@
 
 import { motion, useReducedMotion, type Variants } from "motion/react";
 
+import { useRevealAmount } from "@/components/landing/use-reveal-amount";
+
 const STEPS = [
   {
     n: "01",
@@ -28,6 +30,7 @@ const STEPS = [
 export function HowItWorks() {
   // Same reduced-motion + variants pattern as the hero entrance.
   const reduce = useReducedMotion();
+  const revealAmount = useRevealAmount();
   const container: Variants = {
     hidden: {},
     show: { transition: { staggerChildren: reduce ? 0 : 0.14 } },
@@ -50,7 +53,7 @@ export function HowItWorks() {
         variants={container}
         initial="hidden"
         whileInView="show"
-        viewport={{ once: true, amount: 0.4, margin: "-10% 0px" }}
+        viewport={{ once: true, amount: revealAmount, margin: "-10% 0px" }}
         className="mx-auto max-w-6xl"
       >
         {/* Header group animates first as a unit. */}
