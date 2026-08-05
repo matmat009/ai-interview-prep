@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { motion, useReducedMotion } from "motion/react";
+import { Menu, X } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/brand/logo-mark";
@@ -19,6 +20,9 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  // Mobile menu open state. Only ever visible below md — the hamburger and the
+  // panel are both `md:hidden`, so this has no effect on desktop.
+  const [open, setOpen] = useState(false);
   // Same reduced-motion pattern as the hero entrance.
   const reduce = useReducedMotion();
 
@@ -40,6 +44,24 @@ export function Navbar() {
   }
 
   return (
+    <>
+      {/* Tap-outside-to-close backdrop. Above page content but BELOW the header
+          (z-20), so the hamburger + panel stay on top and tappable. Mobile only
+          and only while open. Subtle dim, no blur/glow. */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            aria-hidden
+            onClick={() => setOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduce ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-[15] bg-black/40 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
     <motion.header
       // Drops into place from above — mirrors the hero sliding up from below.
       // Framer drives transform/opacity, so the CSS transition below is narrowed
@@ -78,21 +100,86 @@ export function Navbar() {
         ))}
       </nav>
       <div className="flex items-center gap-4">
-        <Link
-          href="/login"
-          className="hidden text-sm text-white/70 transition-colors hover:text-white sm:block"
+        {/* Desktop (md+): sign in + get started stay inline, unchanged. */}
+        <div className="hidden items-center gap-4 md:flex">
+          <Link
+            href="/login"
+            className="text-sm text-white/70 transition-colors hover:text-white"
+          >
+            Sign in
+          </Link>
+          <Button
+            size="sm"
+            className="px-4"
+            nativeButton={false}
+            render={<Link href="/signup" />}
+          >
+            Get started
+          </Button>
+        </div>
+
+        {/* Mobile (below md): a single hamburger toggle. */}
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          aria-controls="mobile-menu"
+          className="flex size-9 items-center justify-center rounded-lg border border-white/12 bg-white/[0.03] text-white/80 outline-none transition-colors hover:bg-white/[0.06] hover:text-white md:hidden"
         >
-          Sign in
-        </Link>
-        <Button
-          size="sm"
-          className="px-4"
-          nativeButton={false}
-          render={<Link href="/signup" />}
-        >
-          Get started
-        </Button>
+          {open ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
       </div>
+
+      {/* Mobile menu panel — drops below the bar. md:hidden, so desktop never
+          renders it regardless of `open`. */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            id="mobile-menu"
+            initial={{ opacity: 0, y: reduce ? 0 : -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: reduce ? 0 : -8 }}
+            transition={{ duration: reduce ? 0.15 : 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-x-0 top-full border-b border-white/10 bg-[#0a0a0b]/70 backdrop-blur-xl backdrop-saturate-150 md:hidden"
+          >
+            <div className="flex flex-col gap-1 px-6 py-4 sm:px-10">
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.id}
+                  href={`#${link.id}`}
+                  onClick={(e) => {
+                    handleNav(e, link.id);
+                    setOpen(false);
+                  }}
+                  className="rounded-lg px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div className="my-2 h-px bg-white/10" />
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                Sign in
+              </Link>
+              <Button
+                size="sm"
+                className="mt-1 w-full px-4"
+                nativeButton={false}
+                render={
+                  <Link href="/signup" onClick={() => setOpen(false)} />
+                }
+              >
+                Get started
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
+    </>
   );
 }
