@@ -45,13 +45,13 @@ export function ReviewStep({
               key={key}
               className="flex items-start justify-between gap-4 p-4"
             >
-              <div className="flex flex-col gap-1">
+              <div className="flex min-w-0 flex-col gap-1">
                 <dt className="text-sm font-medium">{QUESTION_LABELS[key]}</dt>
                 <dd
                   className={
                     answer
-                      ? "text-sm text-foreground"
-                      : "text-sm text-muted-foreground italic"
+                      ? "text-sm break-words text-foreground"
+                      : "text-sm break-words text-muted-foreground italic"
                   }
                 >
                   {answer || "Not answered"}
@@ -60,7 +60,7 @@ export function ReviewStep({
               <Button
                 variant="link"
                 size="sm"
-                className="h-auto p-0"
+                className="h-auto shrink-0 p-0"
                 onClick={() => onEdit(index)}
               >
                 Edit
